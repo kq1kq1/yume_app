@@ -1,0 +1,1662 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>夢がかなう手帳</title>
+<style>
+:root{
+  --bg:#f4f6fb; --panel:#ffffff; --ink:#1a2233; --ink2:#55617a; --ink3:#7d889f;
+  --line:#e2e7f0; --navy:#1f3864; --navy2:#2e5496; --accent:#a4801a;
+  --danger:#c2410c; --dangerbg:#fff1ea; --dangerline:#f5c6ad;
+  --shadow:0 1px 3px rgba(20,32,60,.08),0 6px 20px rgba(20,32,60,.06);
+  --radius:14px;
+  --g1:#4a8038; --g2:#6d5aa8; --g3:#35619f; --g4:#c25c12; --g5:#256b7d; --g6:#8a6d10;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#11151f; --panel:#1a2030; --ink:#eef2fa; --ink2:#aab5cb; --ink3:#7d889f;
+    --line:#2a3346; --navy:#7aa2e8; --navy2:#8fb2ee; --accent:#d8b447;
+    --danger:#fb923c; --dangerbg:#2e1d12; --dangerline:#5c3a1c;
+    --shadow:0 1px 3px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.3);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:"Yu Gothic UI","Meiryo","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  font-size:15px; line-height:1.7; -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit; font-size:inherit; cursor:pointer}
+input,textarea,select{font-family:inherit; font-size:inherit}
+
+/* ---------- 固定ヘッダー ---------- */
+#topbar{
+  position:sticky; top:0; z-index:60;
+  background:linear-gradient(135deg,var(--navy) 0%,#2b4a80 100%);
+  color:#fff; box-shadow:0 2px 12px rgba(20,32,60,.18);
+}
+.tb-inner{max-width:1180px; margin:0 auto; padding:10px 20px}
+.tb-row{display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+.tb-label{font-size:11px; letter-spacing:.14em; color:#c3d6f3; font-weight:700; white-space:nowrap; padding-top:2px}
+#ultimateText{
+  font-size:19px; font-weight:700; flex:1; min-width:200px;
+  cursor:pointer; border-radius:8px; padding:2px 8px; margin-left:-8px;
+}
+#ultimateText:hover{background:rgba(255,255,255,.14)}
+#ultimateText.empty{color:#b9cdec; font-weight:400; font-size:16px}
+.tb-clock{display:flex; gap:14px; align-items:center; font-size:12px; color:#d5e3f8; white-space:nowrap}
+.tb-clock b{font-size:16px; color:#fff; font-weight:700}
+.tb-search{position:relative}
+.tb-search input{
+  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25);
+  color:#fff; border-radius:99px; padding:6px 14px; width:190px; outline:none;
+}
+.tb-search input::placeholder{color:#c3d6f3}
+.tb-search input:focus{background:rgba(255,255,255,.24); width:250px}
+.syncchip{
+  font-size:11.5px; font-weight:700; padding:3px 12px; border-radius:99px; cursor:pointer;
+  border:1px solid rgba(255,255,255,.3); white-space:nowrap;
+}
+.syncchip.off{background:rgba(255,255,255,.10); color:#c3d6f3}
+.syncchip.ok{background:rgba(126,231,177,.22); color:#c9f7e2; border-color:rgba(126,231,177,.45)}
+.syncchip.pending{background:rgba(253,224,71,.2); color:#fdf0b8; border-color:rgba(253,224,71,.45)}
+.syncchip.err{background:rgba(248,113,80,.26); color:#ffd9cc; border-color:rgba(248,113,80,.5)}
+.tb-nav{display:flex; gap:2px; max-width:1180px; margin:0 auto; padding:0 14px; flex-wrap:wrap}
+.tb-nav button{
+  background:transparent; border:0; color:#cddef7; padding:9px 14px 11px;
+  border-bottom:3px solid transparent; font-size:13.5px; font-weight:600; border-radius:8px 8px 0 0;
+}
+.tb-nav button:hover{color:#fff; background:rgba(255,255,255,.08)}
+.tb-nav button.on{color:#fff; border-bottom-color:var(--accent)}
+.navbadge{
+  display:inline-block; background:#e0512f; color:#fff; font-size:10.5px; font-weight:800;
+  border-radius:99px; padding:0 6px; margin-left:5px; vertical-align:1px;
+}
+
+main{max-width:1180px; margin:0 auto; padding:22px 20px 90px}
+.view{display:none}
+.view.on{display:block; animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h2.sec{font-size:15px; margin:26px 0 12px; color:var(--ink2); font-weight:700;
+  letter-spacing:.04em; display:flex; align-items:center; gap:9px; flex-wrap:wrap}
+h2.sec::before{content:""; width:4px; height:16px; background:var(--navy2); border-radius:2px}
+h2.sec.warn::before{background:var(--danger)}
+.sec-note{font-weight:400; color:var(--ink3); font-size:12.5px}
+
+/* ---------- サンプル帯 ---------- */
+.samplebar{
+  background:#fff8e5; border:1px solid #f0dca8; color:#6b5310;
+  border-radius:12px; padding:12px 18px; margin-bottom:18px;
+  display:flex; gap:14px; align-items:center; flex-wrap:wrap; font-size:13.5px;
+}
+@media (prefers-color-scheme:dark){ .samplebar{background:#2f2712;border-color:#5c4c1c;color:#e8d9a8} }
+.samplebar b{font-weight:800}
+.samplebar button{
+  background:var(--panel); border:1px solid var(--line); color:var(--ink);
+  padding:5px 14px; border-radius:8px; font-size:12.5px; font-weight:700;
+}
+.samplebar button:hover{border-color:var(--navy2)}
+.warnbar{
+  background:#fdeae2; border:1px solid #efa588; color:#8a2c08;
+  border-radius:12px; padding:14px 18px; margin-bottom:18px; font-size:13.5px;
+}
+@media (prefers-color-scheme:dark){ .warnbar{background:#3a1d0f;border-color:#7a3d18;color:#fdba74} }
+.warnbar b{font-weight:800; display:block; margin-bottom:4px; font-size:14.5px}
+.warnbar code{background:rgba(0,0,0,.08); padding:1px 6px; border-radius:5px; font-size:12.5px}
+.warnbar button{background:var(--panel); border:1px solid var(--dangerline); color:var(--danger);
+  padding:5px 14px; border-radius:8px; font-size:12.5px; font-weight:700}
+.warnbar button:hover{border-color:var(--danger)}
+
+/* ---------- 究極の目標 ---------- */
+.ultimate-card{
+  background:linear-gradient(135deg,#22406f,#375f9c); color:#fff;
+  border-radius:var(--radius); padding:26px 30px; box-shadow:var(--shadow);
+  position:relative; overflow:hidden;
+}
+.ultimate-card::after{content:"◆"; position:absolute; right:-12px; top:-22px; font-size:130px;
+  color:rgba(255,255,255,.07); pointer-events:none}
+.uc-label{font-size:11px; letter-spacing:.2em; color:#bcd2f0; font-weight:700}
+.uc-goal{font-size:27px; font-weight:800; line-height:1.45; margin:8px 0 0}
+.uc-goal.empty{font-size:18px; font-weight:400; color:#bcd2f0}
+.uc-why{margin-top:12px; color:#dce8f9; font-size:14px; white-space:pre-wrap}
+.uc-edit{margin-top:16px; background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.35);
+  color:#fff; padding:6px 15px; border-radius:20px; font-size:12.5px; font-weight:600}
+.uc-edit:hover{background:rgba(255,255,255,.3)}
+
+/* ---------- はじめての案内 ---------- */
+.onboard{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:24px 28px; box-shadow:var(--shadow); margin-bottom:18px}
+.onboard h3{margin:0 0 6px; font-size:19px; font-weight:800}
+.onboard p{color:var(--ink2); font-size:14px; margin:0 0 16px}
+.ob-steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+.ob-step{border:1px solid var(--line); border-radius:12px; padding:16px 18px; background:var(--bg)}
+.ob-step .n{font-size:11px; font-weight:800; color:var(--navy2); letter-spacing:.1em}
+.ob-step .t{font-weight:700; margin:4px 0 8px; font-size:14.5px}
+.ob-step .d{font-size:12.5px; color:var(--ink2); margin-bottom:12px}
+
+/* ---------- 人生時計 ---------- */
+.clock-wrap{display:grid; grid-template-columns:repeat(auto-fit,minmax(128px,1fr)); gap:12px; margin-top:14px}
+.clock-cell{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:13px 16px; box-shadow:var(--shadow)}
+.clock-cell .k{font-size:11px; color:var(--ink3); font-weight:600; letter-spacing:.06em}
+.clock-cell .v{font-size:21px; font-weight:800; margin-top:2px}
+.clock-cell .v small{font-size:12px; font-weight:600; color:var(--ink2); margin-left:2px}
+.lifebar{height:9px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:12px}
+.lifebar>i{display:block; height:100%; background:linear-gradient(90deg,var(--navy2),#6f9be0); border-radius:99px}
+
+/* ---------- ピラミッド ---------- */
+.pyr-row{display:flex; gap:12px; justify-content:center; margin-bottom:12px; flex-wrap:wrap}
+.pyr-level-tag{text-align:center; font-size:11px; color:var(--ink3); letter-spacing:.16em; font-weight:700; margin-bottom:6px}
+.genre-card{
+  border:0; text-align:left; color:#fff; border-radius:var(--radius);
+  padding:15px 17px; box-shadow:var(--shadow); position:relative; overflow:hidden;
+  transition:transform .16s ease, box-shadow .16s ease; min-height:104px;
+  display:flex; flex-direction:column; text-shadow:0 1px 2px rgba(0,0,0,.32);
+}
+.genre-card:hover{transform:translateY(-3px); box-shadow:0 8px 26px rgba(20,32,60,.22)}
+.genre-card .gname{font-size:16px; font-weight:800}
+.genre-card .gsub{font-size:11.5px; opacity:.95; margin-top:1px}
+.genre-card .gpeek{margin-top:9px; font-size:12px; line-height:1.6; display:flex; flex-direction:column; gap:3px}
+.genre-card .gpeek span{white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  background:rgba(0,0,0,.22); border-radius:5px; padding:2px 7px}
+.genre-card .gpeek .none{background:rgba(0,0,0,.14); opacity:.95}
+.pyr-w1{width:min(320px,92vw)} .pyr-w2{width:min(258px,92vw)} .pyr-w3{width:min(212px,92vw)}
+
+/* ---------- パンくず ---------- */
+.crumb{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:14px; font-size:13px}
+.crumb button{background:var(--panel); border:1px solid var(--line); color:var(--ink2);
+  padding:4px 12px; border-radius:99px; font-size:12.5px; font-weight:600; box-shadow:var(--shadow)}
+.crumb button:hover{color:var(--ink); border-color:var(--navy2)}
+.crumb .sep{color:var(--ink3); font-size:11px}
+.crumb .cur{background:var(--navy); color:#fff; border:1px solid var(--navy);
+  padding:4px 13px; border-radius:99px; font-weight:700; font-size:12.5px}
+
+/* ---------- ノード見出し ---------- */
+.node-head{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 24px; box-shadow:var(--shadow); border-left:6px solid var(--navy2)}
+.node-head .lvtag{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.1em;
+  padding:3px 10px; border-radius:99px; background:var(--line); color:var(--ink2)}
+.node-head h1{font-size:24px; margin:9px 0 0; font-weight:800; line-height:1.4}
+.node-head .detail{margin-top:10px; color:var(--ink2); white-space:pre-wrap; font-size:14.5px}
+.node-head .why{margin-top:12px; padding:11px 15px; background:rgba(164,128,26,.1);
+  border-left:3px solid var(--accent); border-radius:0 8px 8px 0; white-space:pre-wrap; font-size:14px}
+.node-head .why b{color:var(--accent); font-size:11.5px; letter-spacing:.1em; display:block; margin-bottom:2px}
+.node-meta{display:flex; gap:18px; flex-wrap:wrap; margin-top:14px; font-size:12.5px; color:var(--ink2)}
+.node-meta .mi b{color:var(--ink); font-weight:700}
+.lineage{margin-top:14px; background:var(--panel); border:1px dashed var(--line);
+  border-radius:12px; padding:13px 18px; font-size:13px; color:var(--ink2)}
+.lineage .lg-label{font-size:11px; letter-spacing:.1em; color:var(--ink3); font-weight:700; margin-bottom:6px}
+.lineage ul{margin:0; padding-left:18px}
+.lineage li{margin:2px 0}
+.lineage li b{color:var(--ink)}
+
+/* ---------- ふりかえりメモ ---------- */
+.loglist{margin-top:14px; background:var(--panel); border:1px solid var(--line);
+  border-radius:12px; padding:14px 18px; box-shadow:var(--shadow)}
+.loglist .ll-h{font-size:11px; letter-spacing:.1em; color:var(--ink3); font-weight:700; margin-bottom:8px}
+.logitem{display:flex; gap:12px; padding:7px 0; border-bottom:1px dashed var(--line); font-size:13.5px}
+.logitem:last-child{border-bottom:0}
+.logitem .ld{color:var(--ink3); font-size:12px; font-weight:700; white-space:nowrap; padding-top:2px}
+.logitem .lt{white-space:pre-wrap; flex:1}
+.logitem .lx{background:none;border:0;color:var(--ink3);font-size:12px;padding:0 4px}
+.logitem .lx:hover{color:var(--danger)}
+
+/* ---------- カード ---------- */
+.child-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(288px,1fr)); gap:14px; margin-top:4px}
+.child-card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px 18px; box-shadow:var(--shadow); text-align:left; width:100%;
+  transition:transform .15s ease, box-shadow .15s ease;
+  display:flex; flex-direction:column; border-left:5px solid var(--navy2)}
+.child-card:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(20,32,60,.16)}
+.cc-lv{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink3)}
+.cc-title{font-size:16px; font-weight:700; line-height:1.45}
+.cc-detail{margin-top:7px; font-size:13px; color:var(--ink2); white-space:pre-wrap}
+.cc-why{margin-top:8px; font-size:12.5px; color:var(--ink2); white-space:pre-wrap;
+  padding-left:9px; border-left:2px solid var(--accent)}
+.cc-path{margin-top:8px; font-size:11.5px; color:var(--ink3)}
+.cc-foot{margin-top:auto; padding-top:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+.chip{font-size:11px; font-weight:700; padding:2px 9px; border-radius:99px}
+.chip.st0{background:#eceff5; color:#4d5872}
+.chip.st1{background:#dbeafe; color:#1e40af}
+.chip.st2{background:#d1fae5; color:#065f46}
+.chip.st3{background:#fef3c7; color:#8a5a06}
+.chip.dl{background:#eef1f6; color:#4b5563}
+.chip.dl.soon{background:#fde8e2; color:#9a3412}
+.chip.dl.over{background:#fbd5c8; color:#8a2c08; font-weight:800}
+@media (prefers-color-scheme:dark){
+  .chip.st0{background:#2a3346;color:#aab5cb} .chip.st1{background:#1e3a5f;color:#9ecbfd}
+  .chip.st2{background:#14432f;color:#7ceec0} .chip.st3{background:#453109;color:#fcd34d}
+  .chip.dl{background:#2a3346;color:#aab5cb} .chip.dl.soon{background:#4a2a17;color:#fdba74}
+  .chip.dl.over{background:#5c2c10;color:#fdba74}
+}
+.cc-count{font-size:11.5px; color:var(--ink3); margin-left:auto; font-weight:600}
+.minibar{height:4px; background:var(--line); border-radius:99px; overflow:hidden; margin-top:10px}
+.minibar>i{display:block; height:100%; background:var(--navy2); border-radius:99px}
+.addbtn{background:var(--panel); border:2px dashed var(--line); color:var(--ink2);
+  border-radius:var(--radius); padding:20px; font-weight:700; font-size:14px;
+  display:flex; align-items:center; justify-content:center; min-height:110px}
+.addbtn:hover{border-color:var(--navy2); color:var(--navy2)}
+.empty-note{color:var(--ink3); font-size:13.5px; background:var(--panel); border:1px solid var(--line);
+  border-radius:12px; padding:16px 20px; margin-top:4px}
+.rowbtns{display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; align-items:center}
+.rowbtns button{background:transparent; border:1px solid var(--line); color:var(--ink2);
+  padding:4px 11px; border-radius:8px; font-size:12px; font-weight:600}
+.rowbtns button:hover{border-color:var(--navy2); color:var(--navy2)}
+.rowbtns .spacer{flex:1; min-width:20px}
+.rowbtns button.danger{color:var(--danger); border-color:var(--dangerline)}
+.rowbtns button.danger:hover{background:var(--dangerbg); border-color:var(--danger)}
+
+/* ---------- 見直し画面 ---------- */
+.rev-card{background:var(--panel); border:1px solid var(--line); border-left:5px solid var(--navy2);
+  border-radius:12px; padding:15px 18px; box-shadow:var(--shadow); margin-bottom:11px}
+.rev-card.over{border-left-color:var(--danger)}
+.rev-top{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap}
+.rev-title{font-size:15.5px; font-weight:700; background:none; border:0; padding:0; color:var(--ink); text-align:left}
+.rev-title:hover{color:var(--navy2); text-decoration:underline}
+.rev-path{font-size:11.5px; color:var(--ink3); margin-top:3px}
+.rev-detail{font-size:13px; color:var(--ink2); margin-top:6px; white-space:pre-wrap}
+.periodnav{display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap}
+.periodnav button{background:var(--panel); border:1px solid var(--line); color:var(--ink);
+  border-radius:9px; padding:5px 13px; font-weight:700; font-size:13px}
+.periodnav button:hover{border-color:var(--navy2)}
+.periodnav .pv{font-size:17px; font-weight:800; min-width:150px; text-align:center}
+.reviewbox{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:18px 22px; box-shadow:var(--shadow); margin-bottom:18px}
+.reviewbox textarea{width:100%; min-height:96px; padding:10px 13px; border:1px solid var(--line);
+  border-radius:10px; background:var(--bg); color:var(--ink); resize:vertical; line-height:1.7; outline:none}
+.reviewbox textarea:focus{border-color:var(--navy2); background:var(--panel)}
+
+/* ---------- ツリー ---------- */
+.tree{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:10px 8px; box-shadow:var(--shadow)}
+.trow{display:flex; align-items:flex-start; gap:8px; padding:5px 8px; border-radius:9px}
+.trow:hover{background:var(--bg)}
+.tcaret{background:transparent; border:0; color:var(--ink3); width:20px; height:22px;
+  font-size:11px; padding:0; flex-shrink:0; transition:transform .15s}
+.tcaret.open{transform:rotate(90deg)}
+.tcaret.leaf{visibility:hidden}
+.tdot{width:9px; height:9px; border-radius:3px; flex-shrink:0; margin-top:7px}
+.ttitle{flex:1; text-align:left; background:transparent; border:0; color:var(--ink);
+  font-size:14px; font-weight:600; padding:0; line-height:1.55}
+.ttitle:hover{color:var(--navy2); text-decoration:underline}
+.ttitle .lv{font-size:10.5px; color:var(--ink3); font-weight:700; margin-right:7px}
+.ttitle .dt{display:block; font-size:12px; color:var(--ink2); font-weight:400; margin-top:1px}
+.tkids{margin-left:22px; border-left:1px dashed var(--line); padding-left:6px}
+.tmeta{font-size:11px;color:var(--ink3);white-space:nowrap;padding-top:5px}
+
+/* ---------- 年表 ---------- */
+.yearblock{background:var(--panel); border:1px solid var(--line); border-radius:12px;
+  padding:14px 18px; box-shadow:var(--shadow); margin-bottom:11px;
+  display:grid; grid-template-columns:112px 1fr; gap:16px; align-items:start}
+.yb-year{font-size:22px; font-weight:800; color:var(--navy)}
+.yb-age{font-size:12px; color:var(--ink3); font-weight:600}
+.yb-items{display:flex; flex-direction:column; gap:7px}
+.yb-item{display:flex; gap:9px; align-items:baseline; font-size:13.5px; flex-wrap:wrap}
+.yb-item .yl{font-size:10.5px; font-weight:800; padding:1px 8px; border-radius:99px;
+  color:#fff; white-space:nowrap; text-shadow:0 1px 1px rgba(0,0,0,.3)}
+.yb-item button{background:none;border:0;padding:0;color:var(--ink);font-size:13.5px;font-weight:600;text-align:left}
+.yb-item button:hover{color:var(--navy2); text-decoration:underline}
+.yb-empty{color:var(--ink3); font-size:12.5px}
+
+/* ---------- 習慣 ---------- */
+.hab-block{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:16px 18px; box-shadow:var(--shadow); margin-bottom:16px}
+.hab-title{font-weight:800; font-size:14px; margin-bottom:4px; color:var(--navy)}
+.hab-scroll{overflow-x:auto; padding-bottom:4px}
+table.hab{border-collapse:separate; border-spacing:0; font-size:12.5px}
+table.hab th,table.hab td{border-bottom:1px solid var(--line); padding:5px 3px; text-align:center}
+table.hab th:first-child,table.hab td:first-child{text-align:left; min-width:180px; padding-left:6px;
+  position:sticky; left:0; background:var(--panel); z-index:2}
+table.hab th{font-size:11px; color:var(--ink3); font-weight:700}
+table.hab th.today{color:var(--navy2); font-weight:800}
+.habcell{width:23px; height:23px; border-radius:6px; border:1px solid var(--line);
+  background:transparent; padding:0; font-size:12px; color:var(--ink3)}
+.habcell:hover{border-color:var(--navy2)}
+.habcell.on{background:#c9f2de; border-color:#5ec99b; color:#065f46; font-weight:800}
+.habcell.todaycol{box-shadow:inset 0 0 0 2px rgba(46,84,150,.35)}
+@media (prefers-color-scheme:dark){.habcell.on{background:#14432f;border-color:#0b7a53;color:#7ceec0}}
+.hab-name{background:transparent; border:0; border-bottom:1px dashed var(--line);
+  color:var(--ink); width:100%; padding:3px 2px; font-size:13px}
+.hab-rate{font-weight:800; color:var(--navy2); font-size:12.5px; white-space:nowrap}
+
+/* ---------- モーダル ---------- */
+.modal-bg{position:fixed; inset:0; background:rgba(12,18,30,.55); z-index:100;
+  display:flex; align-items:flex-start; justify-content:center; padding:36px 16px; overflow-y:auto}
+.modal{background:var(--panel); border-radius:var(--radius); box-shadow:0 20px 60px rgba(0,0,0,.3);
+  width:min(620px,100%); padding:24px 26px; border:1px solid var(--line)}
+.modal h3{margin:0 0 4px; font-size:19px; font-weight:800}
+.modal .mh-sub{color:var(--ink3); font-size:12.5px; margin-bottom:18px}
+.f{margin-bottom:15px}
+.f label{display:block; font-size:12px; font-weight:700; color:var(--ink2); margin-bottom:5px}
+.f .hint{font-weight:400; color:var(--ink3); font-size:11.5px; margin-left:6px}
+.f input[type=text],.f input[type=date],.f input[type=number],.f textarea,.f select{
+  width:100%; padding:9px 12px; border:1px solid var(--line); border-radius:9px;
+  background:var(--bg); color:var(--ink); outline:none}
+.f textarea{resize:vertical; min-height:66px; line-height:1.65}
+.f input:focus,.f textarea:focus,.f select:focus{border-color:var(--navy2); background:var(--panel)}
+.modal-btns{display:flex; gap:9px; justify-content:flex-end; margin-top:22px; flex-wrap:wrap}
+.btn{padding:9px 20px; border-radius:9px; border:1px solid var(--line);
+  background:var(--panel); color:var(--ink); font-weight:700; font-size:13.5px}
+.btn:hover{border-color:var(--navy2)}
+.btn.primary{background:var(--navy); color:#fff; border-color:var(--navy)}
+.btn.primary:hover{background:var(--navy2)}
+.btn.danger{color:var(--danger); border-color:var(--dangerline)}
+.btn.danger:hover{background:var(--dangerbg)}
+.btn.sm{padding:5px 13px; font-size:12.5px}
+.rangebox{display:flex; align-items:center; gap:12px}
+.rangebox input[type=range]{flex:1}
+.rangebox b{min-width:46px; text-align:right; font-size:15px}
+
+.setgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:16px}
+.card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+  padding:20px 22px; box-shadow:var(--shadow)}
+.card h3{margin:0 0 12px; font-size:15px; font-weight:800}
+.card p{color:var(--ink2); font-size:13px; margin:0 0 14px}
+.toast{position:fixed; bottom:26px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--navy); color:#fff; padding:11px 16px 11px 24px; border-radius:99px;
+  font-size:13.5px; font-weight:600; box-shadow:0 8px 30px rgba(0,0,0,.35);
+  opacity:0; pointer-events:none; transition:.25s; z-index:200; display:flex; align-items:center; gap:14px}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto}
+.toast button{background:rgba(255,255,255,.2); border:1px solid rgba(255,255,255,.4);
+  color:#fff; border-radius:99px; padding:3px 14px; font-size:12.5px; font-weight:700}
+.toast button:hover{background:rgba(255,255,255,.32)}
+
+/* ---------- 印刷 ---------- */
+@media print{
+  :root{--bg:#fff;--panel:#fff;--ink:#000;--ink2:#333;--ink3:#666;--line:#bbb;
+        --navy:#1f3864;--navy2:#2e5496;--accent:#8a6d10}
+  body{background:#fff; print-color-adjust:exact; -webkit-print-color-adjust:exact}
+  #topbar{position:static; box-shadow:none}
+  .tb-nav,.tb-clock,.tb-search,.addbtn,.rowbtns,.uc-edit,.samplebar button,.periodnav button{display:none!important}
+  .view{display:block!important}
+  .child-card,.yearblock,.node-head,.hab-block,.tnode,.rev-card,.card,.loglist{break-inside:avoid}
+  h2.sec{break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="tb-inner">
+    <div class="tb-row">
+      <span class="tb-label">究極の目標</span>
+      <div id="ultimateText" class="empty" title="クリックして編集">（未設定）クリックして入力</div>
+      <div class="tb-search"><input type="search" id="searchBox" placeholder="🔍 書いたことを探す"></div>
+      <span class="syncchip off" id="syncStatus" style="display:none" title=""></span>
+      <div class="tb-clock" id="tbClock"></div>
+    </div>
+  </div>
+  <div class="tb-nav" id="nav"></div>
+</div>
+
+<main>
+  <div class="view on" id="v-home"></div>
+  <div class="view" id="v-node"></div>
+  <div class="view" id="v-review"></div>
+  <div class="view" id="v-tree"></div>
+  <div class="view" id="v-timeline"></div>
+  <div class="view" id="v-habits"></div>
+  <div class="view" id="v-data"></div>
+  <div class="view" id="v-search"></div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   階層定義（マクロ → ミクロ）
+   ========================================================= */
+const LEVEL_ORDER = ["genre","major","mid","annual","quarter","action"];
+const LEVELS = {
+  genre:   {label:"分野",             child:"major",   hint:"人生の6分野"},
+  major:   {label:"大目標",           child:"mid",     hint:"10〜20年で成し遂げたいこと（戦略）"},
+  mid:     {label:"中目標",           child:"annual",  hint:"数年で到達したい状態"},
+  annual:  {label:"単年度目標",       child:"quarter", hint:"今年ここまで到達する"},
+  quarter: {label:"四半期・月次目標", child:"action",  hint:"3ヶ月〜1ヶ月の到達点"},
+  action:  {label:"やりたいこと・行動",child:null,     hint:"実際にやること（戦術）"}
+};
+const lvOrder = k => LEVEL_ORDER.indexOf(k);
+const STATUS = ["未着手","進行中","達成","保留"];
+
+const GENRES = [
+  {id:"g1", title:"健康(美容)",         sub:"健康／体／美容の状態",   color:"#4a8038", lv:"基礎"},
+  {id:"g2", title:"心・精神",           sub:"心の持ち方・あり方",     color:"#6d5aa8", lv:"基礎"},
+  {id:"g3", title:"教養・知識",         sub:"専門知識／資格／教養",   color:"#35619f", lv:"基礎"},
+  {id:"g4", title:"プライベート・家庭", sub:"理想の家庭／私生活の夢", color:"#c25c12", lv:"実現"},
+  {id:"g5", title:"社会・仕事",         sub:"社会との関わり／仕事",   color:"#256b7d", lv:"実現"},
+  {id:"g6", title:"経済(物・お金)",     sub:"手に入れたい物理的なもの",color:"#8a6d10", lv:"結果"}
+];
+const GENRE_BY_ID = Object.fromEntries(GENRES.map(g=>[g.id,g]));
+
+/* =========================================================
+   データ
+   ========================================================= */
+const KEY = "yumeTecho_v3";
+let DB=null, currentNodeId=null, currentView="home", lastDeleted=null, searchQuery="";
+
+function uid(){ return "n"+Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${p2(d.getMonth()+1)}-${p2(d.getDate())}`; }
+function p2(n){ return String(n).padStart(2,"0"); }
+
+function blankDB(){
+  return {
+    settings:{ name:"", birthday:"", targetAge:90, ultimateGoal:"", ultimateWhy:"",
+               startYear:new Date().getFullYear(), isSample:false },
+    nodes:[], habits:{daily:[],weekly:[],monthly:[],yearly:[]}, habitMarks:{},
+    reviews:{}, ui:{openTree:[]},
+    meta:{ rev:0, updatedAt:"", device:"" }
+  };
+}
+function sampleDB(){
+  const db=blankDB();
+  db.settings.isSample=true;
+  db.settings.ultimateGoal="自分の力で世の中の課題を解決し、家族と自分の人生を豊かにする";
+  const now=todayStr();
+  const mk=o=>{ const n=Object.assign({id:uid(),parentId:null,level:"major",title:"",detail:"",why:"",
+    deadline:"",status:"未着手",progress:0,order:0,updatedAt:now,log:[]},o); db.nodes.push(n); return n; };
+  const M=mk({parentId:"g5",level:"major",order:0,
+    title:"自分のサービスで多くの人の課題を解決する",
+    detail:"自分がつくった事業が、社会に必要とされ続けている状態",
+    why:"人の役に立っている実感が、自分の人生の一番の充実になるから",
+    deadline:"2040-12-31",status:"進行中"});
+  const D=mk({parentId:M.id,level:"mid",order:0,
+    title:"継続的に収益が出るサービスを1つ立ち上げる",
+    detail:"利用者が定着し、収支が黒字で回っている",
+    why:"まず1つ成功させないと、次の挑戦の土台ができないから",
+    deadline:"2031-12-31",status:"進行中"});
+  const A=mk({parentId:D.id,level:"annual",order:0,
+    title:"最初のサービスを公開し、実際の利用者に使ってもらう",
+    detail:"年内にリリースし、利用者からの感想を集める",
+    why:"作るだけで終わらせず、現実の反応から学ぶため",
+    deadline:"2026-12-31",status:"進行中"});
+  const Q=mk({parentId:A.id,level:"quarter",order:0,
+    title:"最小限の機能（MVP）を形にする",
+    why:"完璧を目指すと出せなくなるから、まず動くものを",
+    deadline:"2026-09-30",status:"進行中"});
+  mk({parentId:Q.id,level:"action",order:0,title:"必要な機能を書き出して優先順位をつける",
+    deadline:"2026-08-15",status:"進行中",progress:40});
+  mk({parentId:Q.id,level:"action",order:1,title:"画面のラフを描く",deadline:"2026-08-31"});
+  const H=mk({parentId:"g1",level:"major",order:0,
+    title:"70代まで自分の足で歩き、やりたいことができる体でいる",
+    detail:"病気で挑戦を諦めることがない状態",
+    why:"体が動かなければ、他のすべての夢が実行できなくなるから",
+    deadline:"2055-12-31",status:"進行中"});
+  const H2=mk({parentId:H.id,level:"mid",order:0,title:"運動が生活の一部になっている",
+    detail:"意識しなくても週3回は体を動かしている",
+    why:"根性ではなく習慣にしないと続かないから",deadline:"2029-12-31",status:"進行中"});
+  const H3=mk({parentId:H2.id,level:"annual",order:0,title:"フルマラソンを完走できる体力をつける",
+    detail:"年内に一度、42.195kmを走りきる",why:"明確な目標があると運動が続くから",
+    deadline:"2026-12-31",status:"進行中"});
+  const H4=mk({parentId:H3.id,level:"quarter",order:0,title:"20kmを一度に走れるようになる",
+    deadline:"2026-10-31",status:"進行中"});
+  mk({parentId:H4.id,level:"action",order:0,title:"週3回のランニングを継続する",status:"進行中",progress:35});
+  db.habits.daily=[{id:uid(),name:"6時に起きる"},{id:uid(),name:"10分の瞑想"},{id:uid(),name:"30分の運動"}];
+  db.habits.weekly=[{id:uid(),name:"週次レビュー（日曜）"},{id:uid(),name:"家計の記録"}];
+  db.habits.monthly=[{id:uid(),name:"月次レビュー"},{id:uid(),name:"目標の見直し"}];
+  db.habits.yearly=[{id:uid(),name:"年間計画を作り直す"},{id:uid(),name:"1年の振り返りを書く"}];
+  return db;
+}
+function load(){
+  try{ const raw=localStorage.getItem(KEY);
+    if(raw){ DB=JSON.parse(raw); normalize(); return; } }catch(e){ console.warn(e); }
+  DB=blankDB(); save();   /* 初回は空。サンプルは任意で読み込む */
+}
+function normalize(){
+  const b=blankDB();
+  DB.settings=Object.assign(b.settings,DB.settings||{});
+  DB.nodes=Array.isArray(DB.nodes)?DB.nodes:[];
+  DB.habits=Object.assign(b.habits,DB.habits||{});
+  DB.habitMarks=DB.habitMarks||{}; DB.reviews=DB.reviews||{};
+  DB.ui=Object.assign(b.ui,DB.ui||{});
+  DB.meta=Object.assign(b.meta,DB.meta||{});
+  DB.meta.rev=Number(DB.meta.rev)||0;
+  const now=todayStr();
+  DB.nodes.forEach(n=>{
+    n.title=n.title||""; n.detail=n.detail||""; n.why=n.why||"";
+    n.deadline=n.deadline||""; n.status=STATUS.includes(n.status)?n.status:"未着手";
+    n.progress=Number(n.progress)||0; n.order=Number(n.order)||0;
+    n.updatedAt=n.updatedAt||now; n.log=Array.isArray(n.log)?n.log:[];
+    if(!LEVELS[n.level]) n.level="action";
+  });
+}
+let storageOK=true;
+function probeStorage(){
+  try{ localStorage.setItem("__probe__","1"); localStorage.removeItem("__probe__"); return true; }
+  catch(e){ return false; }
+}
+function save(opt){
+  opt=opt||{};
+  if(!opt.noBump){
+    DB.meta.rev=(Number(DB.meta.rev)||0)+1;
+    DB.meta.updatedAt=new Date().toISOString();
+    DB.meta.device=SYNC.device||"";
+  }
+  try{ localStorage.setItem(KEY,JSON.stringify(DB)); }
+  catch(e){ if(storageOK){ storageOK=false; go(currentView); } toast("保存できませんでした",null,5000); }
+  if(!opt.noSync) scheduleSync();
+}
+/* 保存が使えない環境（ブラウザの制限など）では、黙って消えないよう必ず警告を出す */
+function storageWarnHTML(){
+  if(storageOK) return "";
+  return `<div class="warnbar">
+    <b>⚠ このままでは書いた内容が保存されません</b>
+    お使いのブラウザが、このファイルからのデータ保存を許可していません。今書いた内容は、画面を閉じると消えます。<br>
+    <span style="display:inline-block;margin-top:8px">対処法（どちらか）：</span>
+    <div style="margin-top:4px">
+      ① 同じフォルダの <code>手帳をひらく.bat</code> をダブルクリックして開き直す（推奨・これだけで直ります）<br>
+      ② 別のブラウザ（Chrome / Edge / Firefox）でこのファイルを開く
+    </div>
+    <div style="margin-top:10px">
+      <button onclick="exportJSON()">いま書いた内容をファイルに書き出す</button>
+    </div>
+  </div>`;
+}
+function topNotices(){ return storageWarnHTML()+sampleBarHTML(); }
+
+/* =========================================================
+   GitHub 同期
+   データはあなたの「非公開リポジトリ」に保存されます。
+   接続情報（トークン等）はこの端末だけに保存し、
+   バックアップJSONには絶対に含めません。
+   ========================================================= */
+const SKEY="yumeTecho_sync_v1";
+let SYNC={token:"",owner:"",repo:"",path:"data.json",auto:true,lastSha:"",lastSyncAt:"",device:""};
+let syncState="off", syncMsg="", syncTimer=null, syncBusy=false, syncQueued=false;
+
+function loadSync(){
+  try{ const raw=localStorage.getItem(SKEY); if(raw) SYNC=Object.assign(SYNC,JSON.parse(raw)); }catch(e){}
+  if(!SYNC.device) SYNC.device=guessDevice();
+  syncState=syncReady()?"ok":"off";
+}
+function saveSync(){ try{ localStorage.setItem(SKEY,JSON.stringify(SYNC)); }catch(e){} }
+function syncReady(){ return !!(SYNC.token&&SYNC.owner&&SYNC.repo&&SYNC.path); }
+function guessDevice(){
+  const ua=navigator.userAgent;
+  if(/Android/i.test(ua)) return "Android";
+  if(/iPhone|iPad|iPod/i.test(ua)) return "iPhone/iPad";
+  if(/Macintosh/i.test(ua)) return "Mac";
+  if(/Windows/i.test(ua)) return "Windows PC";
+  return "端末";
+}
+function utf8ToB64(s){
+  const bytes=new TextEncoder().encode(s); let bin=""; const CH=0x8000;
+  for(let i=0;i<bytes.length;i+=CH) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
+  return btoa(bin);
+}
+function b64ToUtf8(b){
+  const bin=atob(String(b).replace(/\s/g,"")); const by=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) by[i]=bin.charCodeAt(i);
+  return new TextDecoder().decode(by);
+}
+function ghHeaders(){ return {"Authorization":"Bearer "+SYNC.token,
+  "Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"}; }
+function ghUrl(){
+  const path=String(SYNC.path).split("/").filter(Boolean).map(encodeURIComponent).join("/");
+  return `https://api.github.com/repos/${encodeURIComponent(SYNC.owner)}/${encodeURIComponent(SYNC.repo)}/contents/${path}`;
+}
+async function ghErr(r){
+  let d=""; try{ const j=await r.json(); d=j.message||""; }catch(e){}
+  if(r.status===401) return "トークンが正しくないか、期限が切れています";
+  if(r.status===403) return "権限がありません（トークンの権限設定を確認してください）";
+  if(r.status===404) return "保存先が見つかりません（所有者名・リポジトリ名を確認してください）";
+  if(r.status===409||r.status===422) return "他の端末の変更と衝突しました"+(d?"："+d:"");
+  return `通信エラー(${r.status})`+(d?"："+d:"");
+}
+async function ghFetchRemote(){
+  const r=await fetch(ghUrl(),{headers:ghHeaders(),cache:"no-store"});
+  if(r.status===404) return {exists:false};
+  if(!r.ok) throw new Error(await ghErr(r));
+  const j=await r.json();
+  let data=null;
+  try{ data=JSON.parse(b64ToUtf8(j.content||"")); }
+  catch(e){ throw new Error("保存ファイルを読み取れませんでした"); }
+  if(!data||!Array.isArray(data.nodes)) throw new Error("保存ファイルの形式が違います");
+  return {exists:true,sha:j.sha,data:data};
+}
+async function ghPut(obj,sha){
+  const body={ message:`夢がかなう手帳の更新 ${new Date().toLocaleString("ja-JP")}（${SYNC.device}）`,
+               content:utf8ToB64(JSON.stringify(obj,null,2)) };
+  if(sha) body.sha=sha;
+  const r=await fetch(ghUrl(),{method:"PUT",
+    headers:Object.assign(ghHeaders(),{"Content-Type":"application/json"}),body:JSON.stringify(body)});
+  if(!r.ok) throw new Error(await ghErr(r));
+  const j=await r.json();
+  return j.content.sha;
+}
+function setSyncState(s,msg){ syncState=s; syncMsg=msg||""; renderSyncChip(); }
+function renderSyncChip(){
+  const e=el("syncStatus"); if(!e) return;
+  const map={off:["同期オフ","off"],ok:["同期済み","ok"],pending:["保存待ち","pending"],
+             syncing:["同期中…","pending"],error:["同期エラー","err"],conflict:["要確認","err"]};
+  const m=map[syncState]||map.off;
+  e.className="syncchip "+m[1]; e.textContent=m[0];
+  e.title=syncMsg||(SYNC.lastSyncAt?"最終同期 "+new Date(SYNC.lastSyncAt).toLocaleString("ja-JP"):"");
+  e.style.display=syncReady()||syncState!=="off"?"inline-block":"none";
+}
+function scheduleSync(){
+  if(!syncReady()||!SYNC.auto) return;
+  setSyncState("pending"); clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{ syncPush(false); },2500);
+}
+function nodeCount(d){ return (d&&Array.isArray(d.nodes))?d.nodes.length:0; }
+function fmtTime(iso){ if(!iso) return "不明"; const d=new Date(iso); return isNaN(d)?"不明":d.toLocaleString("ja-JP"); }
+function downloadObj(obj,name){
+  const b=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click();
+  URL.revokeObjectURL(a.href);
+}
+async function syncPush(force){
+  if(!syncReady()) return;
+  if(syncBusy){ syncQueued=true; return; }
+  syncBusy=true; setSyncState("syncing");
+  try{
+    const rem=await ghFetchRemote();
+    if(rem.exists && !force && rem.sha!==SYNC.lastSha){
+      syncBusy=false;
+      setSyncState("conflict","GitHub側に、この端末が知らない変更があります");
+      showConflict(rem,!SYNC.lastSha); return;
+    }
+    const sha=await ghPut(DB,rem.exists?rem.sha:null);
+    SYNC.lastSha=sha; SYNC.lastSyncAt=new Date().toISOString(); saveSync();
+    setSyncState("ok");
+  }catch(e){ setSyncState("error",e.message); }
+  syncBusy=false;
+  if(syncQueued){ syncQueued=false; scheduleSync(); }
+}
+async function syncPull(silent){
+  if(!syncReady()){ if(!silent) toast("先に同期の設定をしてください"); return; }
+  setSyncState("syncing");
+  try{
+    const rem=await ghFetchRemote();
+    if(!rem.exists){
+      setSyncState("ok","GitHub側にはまだ保存がありません");
+      if(!silent) toast("GitHub側にはまだ保存がありません");
+      if(DB.nodes.length||DB.settings.ultimateGoal) syncPush(true);
+      return;
+    }
+    const localEmpty=!DB.nodes.length&&!DB.settings.ultimateGoal;
+    if(localEmpty){ adoptRemote(rem,true); return; }
+    if(rem.sha===SYNC.lastSha){ setSyncState("ok"); if(!silent) toast("最新の状態です"); return; }
+    setSyncState("conflict","GitHub側に、この端末が知らない変更があります");
+    showConflict(rem,!SYNC.lastSha);
+  }catch(e){ setSyncState("error",e.message); if(!silent) toast("同期できませんでした："+e.message,null,5000); }
+}
+function adoptRemote(rem,silent){
+  DB=rem.data; normalize();
+  SYNC.lastSha=rem.sha; SYNC.lastSyncAt=new Date().toISOString(); saveSync();
+  save({noBump:true,noSync:true});
+  setSyncState("ok"); go("home");
+  toast(silent?"GitHubから読み込みました":"GitHubの内容を取り込みました");
+}
+function showConflict(rem,firstTime){
+  const L={when:fmtTime(DB.meta&&DB.meta.updatedAt),n:nodeCount(DB),dev:(DB.meta&&DB.meta.device)||"この端末"};
+  const R={when:fmtTime(rem.data.meta&&rem.data.meta.updatedAt),n:nodeCount(rem.data),dev:(rem.data.meta&&rem.data.meta.device)||"別の端末"};
+  openChoice({
+    title: firstTime?"GitHubに保存済みのデータが見つかりました":"内容が食い違っています",
+    sub: firstTime
+      ? "この端末の内容と、GitHubに保存されている内容のどちらを使うか選んでください。選ばなかった方は、念のためファイルとして書き出されます。"
+      : "他の端末で更新されたようです。どちらを残すか選んでください。選ばなかった方は、念のためファイルとして書き出されます。",
+    html:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0">
+      <div style="border:1px solid var(--line);border-radius:10px;padding:13px 15px">
+        <div style="font-size:11px;font-weight:800;color:var(--navy2);letter-spacing:.08em">この端末</div>
+        <div style="font-size:20px;font-weight:800;margin-top:4px">${L.n}<span style="font-size:12px;font-weight:600"> 項目</span></div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:4px">最終更新 ${esc(L.when)}</div>
+        <div style="font-size:11.5px;color:var(--ink3)">${esc(L.dev)}</div></div>
+      <div style="border:1px solid var(--line);border-radius:10px;padding:13px 15px">
+        <div style="font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.08em">GitHub側</div>
+        <div style="font-size:20px;font-weight:800;margin-top:4px">${R.n}<span style="font-size:12px;font-weight:600"> 項目</span></div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:4px">最終更新 ${esc(R.when)}</div>
+        <div style="font-size:11.5px;color:var(--ink3)">${esc(R.dev)}</div></div></div>`,
+    buttons:[
+      {label:"GitHubの内容を使う",primary:true,fn:()=>{
+        downloadObj(DB,`夢がかなう手帳_この端末の控え_${todayStr()}.json`);
+        adoptRemote(rem,false); }},
+      {label:"この端末の内容を使う",fn:()=>{
+        downloadObj(rem.data,`夢がかなう手帳_GitHub側の控え_${todayStr()}.json`);
+        syncPush(true); toast("この端末の内容で上書きしました"); }},
+      {label:"あとで決める",fn:()=>{ setSyncState("conflict","未解決のままです"); }}
+    ]});
+}
+async function syncTest(){
+  if(!syncReady()){ toast("すべての欄を入力してください"); return; }
+  setSyncState("syncing");
+  try{
+    const r=await fetch(`https://api.github.com/repos/${encodeURIComponent(SYNC.owner)}/${encodeURIComponent(SYNC.repo)}`,{headers:ghHeaders(),cache:"no-store"});
+    if(!r.ok) throw new Error(await ghErr(r));
+    const j=await r.json();
+    setSyncState("ok");
+    toast(`接続できました（${j.full_name}${j.private?"・非公開":"・公開"}）`,null,4000);
+    if(!j.private) toast("⚠ このリポジトリは公開設定です。非公開に変えてください",null,7000);
+    go("data");
+  }catch(e){ setSyncState("error",e.message); toast("つながりません："+e.message,null,6000); }
+}
+function saveSyncSettings(){
+  SYNC.owner=el("syOwner").value.trim();
+  SYNC.repo=el("syRepo").value.trim();
+  SYNC.path=(el("syPath").value.trim()||"data.json");
+  const tk=el("syToken").value.trim();
+  if(tk&&tk!=="********") SYNC.token=tk;
+  SYNC.auto=el("syAuto").checked;
+  saveSync(); setSyncState(syncReady()?"ok":"off");
+  go("data"); toast("同期の設定を保存しました");
+}
+function syncDisconnect(){
+  if(!confirm("同期を解除します。この端末の中のデータは残ります。よろしいですか？")) return;
+  SYNC={token:"",owner:"",repo:"",path:"data.json",auto:true,lastSha:"",lastSyncAt:"",device:SYNC.device};
+  saveSync(); setSyncState("off"); go("data"); toast("同期を解除しました");
+}
+function touch(n){ n.updatedAt=todayStr(); }
+
+/* ---- ノード ---- */
+function nodeById(id){
+  if(!id) return null;
+  if(GENRE_BY_ID[id]){ const g=GENRE_BY_ID[id];
+    return {id:g.id,level:"genre",parentId:null,title:g.title,detail:g.sub,why:"",
+            deadline:"",status:"",progress:null,isGenre:true,log:[]}; }
+  return DB.nodes.find(n=>n.id===id)||null;
+}
+function childrenOf(id){ return DB.nodes.filter(n=>n.parentId===id)
+  .sort((a,b)=>(a.order-b.order)||lvOrder(a.level)-lvOrder(b.level)||a.title.localeCompare(b.title,"ja")); }
+function ancestors(id){ const out=[]; let n=nodeById(id);
+  let guard=0;
+  while(n&&n.parentId&&guard++<50){ const p=nodeById(n.parentId); if(!p) break; out.unshift(p); n=p; }
+  return out; }
+function genreOf(id){ const n=nodeById(id); if(!n) return null;
+  if(n.isGenre) return GENRE_BY_ID[n.id];
+  const g=ancestors(id).find(x=>x.isGenre); return g?GENRE_BY_ID[g.id]:null; }
+function descendantIds(id){ const out=[]; const walk=p=>childrenOf(p).forEach(c=>{out.push(c.id);walk(c.id);}); walk(id); return out; }
+function countAll(id){ return descendantIds(id).length; }
+function pathLabel(id){
+  const a=ancestors(id);
+  return a.map(x=>x.title).join(" ▸ ");
+}
+function rollupProgress(id){
+  const kids=childrenOf(id);
+  if(!kids.length){ const n=nodeById(id); if(!n||n.isGenre) return null;
+    return n.status==="達成"?100:(Number(n.progress)||0); }
+  const v=kids.map(k=>rollupProgress(k.id)).filter(x=>x!==null);
+  return v.length? Math.round(v.reduce((a,b)=>a+b,0)/v.length) : null;
+}
+function deleteNodeWithUndo(id){
+  const n=nodeById(id); if(!n||n.isGenre) return;
+  const ids=[id,...descendantIds(id)];
+  lastDeleted=DB.nodes.filter(x=>ids.includes(x.id)).map(x=>JSON.parse(JSON.stringify(x)));
+  DB.nodes=DB.nodes.filter(x=>!ids.includes(x.id)); save();
+  toast(`「${n.title}」を削除しました`,{label:"元に戻す",fn:undoDelete},9000);
+}
+function undoDelete(){
+  if(!lastDeleted) return;
+  DB.nodes=DB.nodes.concat(lastDeleted); lastDeleted=null; save();
+  go(currentView); toast("元に戻しました");
+}
+function moveOrder(id,dir){
+  const n=nodeById(id); if(!n) return;
+  const sib=childrenOf(n.parentId);
+  const i=sib.findIndex(s=>s.id===id), j=i+dir;
+  if(i<0||j<0||j>=sib.length) return;
+  sib.forEach((s,k)=>{s.order=k;});
+  const t=sib[i].order; sib[i].order=sib[j].order; sib[j].order=t; save();
+}
+/* 別の親へ移す（階層も自動で付け替え） */
+function reparent(id,newParentId){
+  const n=nodeById(id); if(!n||n.isGenre) return false;
+  if(newParentId===id||descendantIds(id).includes(newParentId)) { toast("自分の下には移せません"); return false; }
+  const np=nodeById(newParentId); if(!np) return false;
+  const newLevel=LEVELS[np.level].child; if(!newLevel){ toast("その下には置けません"); return false; }
+  const delta=lvOrder(newLevel)-lvOrder(n.level);
+  const shift=x=>{ const o=Math.min(LEVEL_ORDER.length-1,Math.max(1,lvOrder(x.level)+delta)); x.level=LEVEL_ORDER[o]; };
+  shift(n); descendantIds(id).forEach(cid=>{ const c=nodeById(cid); if(c) shift(c); });
+  n.parentId=newParentId; n.order=childrenOf(newParentId).length; touch(n); save(); return true;
+}
+
+/* =========================================================
+   汎用
+   ========================================================= */
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const el=id=>document.getElementById(id);
+let toastTimer=null;
+function toast(msg,action,ms){
+  const t=el("toast");
+  t.innerHTML=`<span>${esc(msg)}</span>`;
+  if(action){ const b=document.createElement("button"); b.textContent=action.label;
+    b.onclick=()=>{ t.classList.remove("on"); action.fn(); }; t.appendChild(b); }
+  t.classList.add("on"); clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("on"), ms||2200);
+}
+function fmtDate(d){ if(!d) return ""; const p=d.split("-"); return p.length===3?`${p[0]}/${p[1]}/${p[2]}`:d; }
+function daysLeft(d){ if(!d) return null; const t=new Date(); t.setHours(0,0,0,0);
+  const x=new Date(d+"T00:00:00"); if(isNaN(x)) return null; return Math.round((x-t)/86400000); }
+function daysSince(d){ if(!d) return null; const t=new Date(); t.setHours(0,0,0,0);
+  const x=new Date(d+"T00:00:00"); if(isNaN(x)) return null; return Math.round((t-x)/86400000); }
+function statusIdx(s){ const i=STATUS.indexOf(s); return i<0?0:i; }
+
+/* =========================================================
+   ヘッダー
+   ========================================================= */
+const NAVS=[["home","🏠 ホーム"],["review","🔄 今月の見直し"],["tree","🌳 目標ツリー"],
+            ["timeline","🗓 未来年表"],["habits","🔁 習慣"],["data","⚙️ 設定・保存"]];
+function overdueList(){
+  return DB.nodes.filter(n=>n.deadline&&n.status!=="達成"&&n.status!=="保留")
+    .map(n=>({n,d:daysLeft(n.deadline)})).filter(x=>x.d!==null&&x.d<0)
+    .sort((a,b)=>a.d-b.d);
+}
+function renderTop(){
+  const s=DB.settings, u=el("ultimateText");
+  if(s.ultimateGoal){ u.textContent=s.ultimateGoal; u.classList.remove("empty"); }
+  else { u.textContent="（未設定）クリックして入力"; u.classList.add("empty"); }
+  const info=lifeInfo();
+  el("tbClock").innerHTML = info
+    ? `<span>残り <b>${info.left.toLocaleString()}</b> 日</span><span>経過 <b>${info.pct}%</b></span>` : "";
+  const nav=el("nav"), od=overdueList().length;
+  nav.innerHTML="";
+  NAVS.forEach(([k,label])=>{
+    const b=document.createElement("button"); b.dataset.k=k;
+    b.innerHTML=esc(label)+(k==="review"&&od?`<span class="navbadge">${od}</span>`:"");
+    b.onclick=()=>go(k);
+    if(k===currentView||(currentView==="node"&&k==="home")||(currentView==="search"&&k==="home")) b.classList.add("on");
+    nav.appendChild(b);
+  });
+  renderSyncChip();
+}
+function lifeInfo(){
+  const s=DB.settings; if(!s.birthday) return null;
+  const b=new Date(s.birthday+"T00:00:00"); if(isNaN(b)) return null;
+  const end=new Date(b); end.setFullYear(b.getFullYear()+(Number(s.targetAge)||90));
+  const now=new Date(); now.setHours(0,0,0,0);
+  const total=Math.round((end-b)/86400000), done=Math.round((now-b)/86400000);
+  return {total,done,left:Math.max(0,total-done),years:(Math.max(0,total-done)/365.25).toFixed(1),
+          pct:Math.min(100,(done/total*100)).toFixed(1),age:Math.floor(done/365.25)};
+}
+
+/* =========================================================
+   画面遷移
+   ========================================================= */
+function go(view,id){
+  currentView=view; if(id!==undefined) currentNodeId=id;
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
+  el("v-"+view).classList.add("on");
+  ({home:renderHome,node:renderNode,review:renderReview,tree:renderTree,
+    timeline:renderTimeline,habits:renderHabits,data:renderData,search:renderSearch}[view])();
+  renderTop(); window.scrollTo({top:0,behavior:"instant"});
+}
+function openNode(id){ go("node",id); }
+
+/* =========================================================
+   ホーム
+   ========================================================= */
+function sampleBarHTML(){
+  if(!DB.settings.isSample) return "";
+  return `<div class="samplebar">
+    <b>これは例（サンプル）です。</b>
+    <span>中身はあなたのものではありません。消して、自分の目標を書き始めましょう。</span>
+    <button onclick="wipeSample()">消して自分の内容にする</button>
+    <button onclick="keepSample()">このまま使う</button>
+  </div>`;
+}
+function wipeSample(){
+  if(!confirm("サンプルの内容（目標・究極の目標・習慣）をすべて消します。よろしいですか？")) return;
+  const st=DB.settings.startYear, ta=DB.settings.targetAge;
+  DB=blankDB(); DB.settings.startYear=st; DB.settings.targetAge=ta; save(); go("home"); toast("空にしました");
+}
+function keepSample(){ DB.settings.isSample=false; save(); go(currentView); }
+
+function renderHome(){
+  const s=DB.settings, info=lifeInfo();
+  const isNew=!s.ultimateGoal&&!DB.nodes.length;
+  let h=topNotices();
+
+  if(isNew){
+    h+=`<div class="onboard">
+      <h3>ようこそ。まず「一番大きな目標」から決めます。</h3>
+      <p>この手帳は、大きな目標を決めて、それを少しずつ細かく分けていく作りになっています。上から順に3つだけ設定すれば始められます。</p>
+      <div class="ob-steps">
+        <div class="ob-step"><div class="n">STEP 1</div><div class="t">究極の目標を書く</div>
+          <div class="d">人生をかけて実現したいこと。うまく言えなくても大丈夫です。あとから何度でも直せます。</div>
+          <button class="btn primary sm" onclick="editUltimate()">書いてみる</button></div>
+        <div class="ob-step"><div class="n">STEP 2</div><div class="t">生年月日を入れる</div>
+          <div class="d">人生の残り日数（人生時計）が出ます。時間が有限だと分かると、決断が早くなります。</div>
+          <button class="btn sm" onclick="go('data')">設定を開く</button></div>
+        <div class="ob-step"><div class="n">STEP 3</div><div class="t">6分野に大目標を置く</div>
+          <div class="d">下のピラミッドで分野を押すと、その分野の大目標を追加できます。</div>
+          <button class="btn sm" onclick="loadSample()">先に例を見る</button></div>
+      </div></div>`;
+  }
+
+  h+=`<div class="ultimate-card">
+    <div class="uc-label">究極の目標</div>
+    <div class="uc-goal ${s.ultimateGoal?"":"empty"}">${s.ultimateGoal?esc(s.ultimateGoal):"まだ設定されていません。あなたが人生をかけて実現したいことを言葉にしましょう。"}</div>
+    ${s.ultimateWhy?`<div class="uc-why">${esc(s.ultimateWhy)}</div>`:""}
+    <button class="uc-edit" onclick="editUltimate()">究極の目標を編集</button>
+  </div>`;
+
+  const od=overdueList();
+  if(od.length){
+    h+=`<h2 class="sec warn">期限を過ぎたもの　<span class="sec-note">${od.length}件 — まずここを片付けます</span>
+      <button class="btn sm" style="margin-left:auto" onclick="go('review')">見直し画面で片付ける</button></h2>
+      <div class="child-grid">`;
+    od.slice(0,6).forEach(({n,d})=>{ h+=childCardHTML(n,{daysOverride:d,showPath:true}); });
+    h+=`</div>`;
+    if(od.length>6) h+=`<div class="empty-note">ほか ${od.length-6} 件あります。「今月の見直し」で全部確認できます。</div>`;
+  }
+
+  if(info){
+    h+=`<h2 class="sec">人生時計（時間＝命）</h2><div class="clock-wrap">
+      <div class="clock-cell"><div class="k">今の年齢</div><div class="v">${info.age}<small>歳</small></div></div>
+      <div class="clock-cell"><div class="k">これまで</div><div class="v">${info.done.toLocaleString()}<small>日</small></div></div>
+      <div class="clock-cell"><div class="k">残り</div><div class="v">${info.left.toLocaleString()}<small>日</small></div></div>
+      <div class="clock-cell"><div class="k">残り（年）</div><div class="v">${info.years}<small>年</small></div></div>
+      <div class="clock-cell"><div class="k">経過率</div><div class="v">${info.pct}<small>%</small></div></div>
+    </div><div class="lifebar"><i style="width:${info.pct}%"></i></div>`;
+  }
+
+  h+=`<h2 class="sec">夢・人生ピラミッド　<span class="sec-note">分野を押すと、その中の目標に入れます</span></h2>`;
+  [["結果",["g6"],"pyr-w1"],["実現",["g4","g5"],"pyr-w2"],["基礎",["g1","g2","g3"],"pyr-w3"]]
+  .forEach(([tag,ids,cls])=>{
+    h+=`<div class="pyr-level-tag">${tag}レベル</div><div class="pyr-row">`;
+    ids.forEach(gid=>{
+      const g=GENRE_BY_ID[gid], majors=childrenOf(gid), total=countAll(gid);
+      let peek = majors.length
+        ? majors.slice(0,2).map(m=>`<span>${esc(m.title)}</span>`).join("")
+          +(majors.length>2?`<span class="none">ほか ${majors.length-2} 件</span>`:"")
+        : `<span class="none">＋ 押して大目標を追加</span>`;
+      h+=`<button class="genre-card ${cls}" style="background:${g.color}" onclick="openNode('${gid}')">
+        <div class="gname">${esc(g.title)}</div><div class="gsub">${esc(g.sub)}</div>
+        <div class="gpeek">${peek}</div>
+        <div style="margin-top:8px;font-size:11px;opacity:.92">大目標 ${majors.length}／全 ${total} 項目</div>
+      </button>`;
+    });
+    h+=`</div>`;
+  });
+
+  const soon=DB.nodes.filter(n=>n.deadline&&n.status!=="達成")
+    .map(n=>({n,d:daysLeft(n.deadline)})).filter(x=>x.d!==null&&x.d>=0&&x.d<=60)
+    .sort((a,b)=>a.d-b.d).slice(0,6);
+  if(soon.length){
+    h+=`<h2 class="sec">まもなく期限（60日以内）</h2><div class="child-grid">`;
+    soon.forEach(({n,d})=>{ h+=childCardHTML(n,{daysOverride:d,showPath:true}); });
+    h+=`</div>`;
+  }
+  el("v-home").innerHTML=h;
+}
+function editUltimate(){
+  openModal({title:"究極の目標",
+    sub:"人生をかけて実現したい、一番大きな目標です。全画面の上部に常に表示されます。",
+    fields:[
+      {k:"ultimateGoal",label:"究極の目標",type:"textarea",value:DB.settings.ultimateGoal,
+       ph:"例）自分の力で世の中の課題を解決し、家族と自分の人生を豊かにする"},
+      {k:"ultimateWhy",label:"なぜそれを実現したいのか",hint:"迷ったときに立ち返る言葉",
+       type:"textarea",value:DB.settings.ultimateWhy,ph:"例）人の役に立っている実感が、自分にとって一番の充実だから"}],
+    onSave:v=>{ DB.settings.ultimateGoal=v.ultimateGoal.trim(); DB.settings.ultimateWhy=v.ultimateWhy.trim();
+      save(); go(currentView); toast("保存しました"); }});
+}
+
+/* =========================================================
+   カード
+   ========================================================= */
+function deadlineChip(n,dOverride){
+  if(!n.deadline) return "";
+  const d=dOverride!==undefined?dOverride:daysLeft(n.deadline);
+  if(d===null) return `<span class="chip dl">${fmtDate(n.deadline)}</span>`;
+  if(d<0) return `<span class="chip dl over">期限超過 ${Math.abs(d).toLocaleString()}日</span>`;
+  return `<span class="chip dl ${d<=30?"soon":""}">あと ${d.toLocaleString()}日</span>`;
+}
+function childCardHTML(n,opt){
+  opt=opt||{};
+  const g=genreOf(n.id), kids=childrenOf(n.id), lv=LEVELS[n.level], p=rollupProgress(n.id);
+  return `<button class="child-card" style="border-left-color:${g?g.color:"var(--navy2)"}" onclick="openNode('${n.id}')">
+    <div class="cc-lv">${esc(lv?lv.label:"")}</div>
+    <div class="cc-title">${esc(n.title||"（無題）")}</div>
+    ${n.detail?`<div class="cc-detail">${esc(n.detail)}</div>`:""}
+    ${n.why?`<div class="cc-why">${esc(n.why)}</div>`:""}
+    ${opt.showPath?`<div class="cc-path">${esc(pathLabel(n.id))}</div>`:""}
+    <div class="cc-foot"><span class="chip st${statusIdx(n.status)}">${esc(n.status)}</span>
+      ${deadlineChip(n,opt.daysOverride)}
+      ${kids.length?`<span class="cc-count">下位 ${kids.length}件</span>`:""}</div>
+    ${p!==null?`<div class="minibar"><i style="width:${p}%"></i></div>`:""}
+  </button>`;
+}
+
+/* =========================================================
+   ノード画面
+   ========================================================= */
+function renderNode(){
+  const n=nodeById(currentNodeId); if(!n){ go("home"); return; }
+  const g=genreOf(n.id), lv=LEVELS[n.level], anc=ancestors(n.id), kids=childrenOf(n.id);
+  const childLevel=lv.child, p=rollupProgress(n.id), d=daysLeft(n.deadline);
+  let h=topNotices();
+
+  h+=`<div class="crumb"><button onclick="go('home')">🏠 ホーム</button><span class="sep">▸</span>`;
+  anc.forEach(a=>{ h+=`<button onclick="openNode('${a.id}')">${esc(a.title)}</button><span class="sep">▸</span>`; });
+  h+=`<span class="cur">${esc(n.title||"（無題）")}</span></div>`;
+
+  h+=`<div class="node-head" style="border-left-color:${g?g.color:"var(--navy2)"}">
+    <span class="lvtag">${esc(lv.label)}</span>
+    <h1>${esc(n.title||"（無題）")}</h1>
+    ${n.detail?`<div class="detail">${esc(n.detail)}</div>`:""}
+    ${n.why?`<div class="why"><b>なぜこれをやるのか</b>${esc(n.why)}</div>`:""}`;
+  if(!n.isGenre){
+    h+=`<div class="node-meta">
+      <span class="mi">状態：<b>${esc(n.status)}</b></span>
+      ${n.deadline?`<span class="mi">実現目標日：<b>${fmtDate(n.deadline)}</b>${d!==null?(d<0?`（${Math.abs(d)}日超過）`:`（あと ${d.toLocaleString()}日）`):""}</span>`:""}
+      ${p!==null?`<span class="mi">進み具合：<b>${p}%</b></span>`:""}
+      ${kids.length?`<span class="mi">下位項目：<b>${kids.length}</b>件（合計 ${countAll(n.id)}）</span>`:""}
+      <span class="mi">最終更新：<b>${fmtDate(n.updatedAt)}</b></span>
+    </div>
+    <div class="rowbtns">
+      <button onclick="editNode('${n.id}')">✏️ 編集</button>
+      <button onclick="addLogModal('${n.id}')">📝 ふりかえりを書く</button>
+      <button onclick="moveOrderUI('${n.id}',-1)">↑ 上へ</button>
+      <button onclick="moveOrderUI('${n.id}',1)">↓ 下へ</button>
+      <button onclick="reparentModal('${n.id}')">📦 別の目標の下へ移す</button>
+      <span class="spacer"></span>
+      <button class="danger" onclick="removeNode('${n.id}')">🗑 削除</button>
+    </div>`;
+  }
+  h+=`</div>`;
+
+  if(anc.length){
+    h+=`<div class="lineage"><div class="lg-label">この目標は、次のために存在しています</div><ul>
+      <li>究極の目標：<b>${esc(DB.settings.ultimateGoal||"（未設定）")}</b></li>`;
+    anc.forEach(a=>{ h+=`<li>${esc(LEVELS[a.level].label)}：<b>${esc(a.title)}</b></li>`; });
+    h+=`</ul></div>`;
+  }
+
+  if(!n.isGenre&&n.log.length){
+    h+=`<div class="loglist"><div class="ll-h">ふりかえりメモ</div>`;
+    n.log.slice().reverse().forEach((L,i)=>{
+      const realIdx=n.log.length-1-i;
+      h+=`<div class="logitem"><span class="ld">${fmtDate(L.d)}</span><span class="lt">${esc(L.t)}</span>
+        <button class="lx" title="削除" onclick="delLog('${n.id}',${realIdx})">×</button></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  if(childLevel){
+    const cl=LEVELS[childLevel];
+    h+=`<h2 class="sec">${esc(cl.label)}　<span class="sec-note">${esc(cl.hint)}</span></h2><div class="child-grid">`;
+    kids.forEach(k=>{ h+=childCardHTML(k); });
+    h+=`<button class="addbtn" onclick="addChild('${n.id}','${childLevel}')">＋ ${esc(cl.label)}を追加</button></div>`;
+    const deeper=LEVEL_ORDER.slice(lvOrder(childLevel)+1);
+    if(deeper.length){
+      h+=`<div class="rowbtns" style="margin-top:10px">
+        <span style="font-size:12px;color:var(--ink3)">途中をとばして直接追加：</span>`;
+      deeper.forEach(dk=>{ h+=`<button onclick="addChild('${n.id}','${dk}')">＋ ${esc(LEVELS[dk].label)}</button>`; });
+      h+=`</div>`;
+    }
+    if(!kids.length) h+=`<div class="empty-note">まだ${esc(cl.label)}がありません。「${esc(n.title||"この目標")}」を実現するために必要なことを、${esc(cl.label)}として分けて書き出しましょう。</div>`;
+  } else {
+    h+=`<h2 class="sec">これが一番細かい単位です</h2>
+    <div class="empty-note">「やりたいこと・行動」は実際に手を動かす単位です。進んだら編集で状態や進み具合を更新し、気づいたことは「ふりかえりを書く」に残しましょう。</div>`;
+  }
+  el("v-node").innerHTML=h;
+}
+
+function nodeFields(o){
+  const v=o.value||{};
+  const f=[
+    {k:"title",label:LEVELS[o.level].label,type:"text",value:v.title||"",ph:"例）継続的に収益が出るサービスを1つ立ち上げる"},
+    {k:"detail",label:"どうなっていれば達成か",hint:"理想の状態を具体的に",type:"textarea",value:v.detail||"",ph:"例）利用者が定着し、収支が黒字で回っている"},
+    {k:"why",label:"なぜこれをやるのか",hint:"迷ったときに立ち返る理由",type:"textarea",value:v.why||"",ph:"例）まず1つ成功させないと、次の挑戦の土台ができないから"},
+    {k:"deadline",label:"実現目標日",type:"date",value:v.deadline||""},
+    {k:"status",label:"状態",type:"select",value:v.status||"未着手",options:STATUS}];
+  if(o.level==="action") f.push({k:"progress",label:"進み具合",type:"range",value:v.progress||0});
+  else f.push({k:"progress",type:"hidden",value:v.progress||0});
+  return f;
+}
+function addChild(parentId,level){
+  const parent=nodeById(parentId), lv=LEVELS[level];
+  openModal({title:lv.label+"を追加",sub:`「${parent.title}」を実現するための${lv.label}です。${lv.hint}`,
+    fields:nodeFields({level}),
+    onSave:v=>{
+      if(!v.title.trim()){ toast("タイトルを入力してください"); return false; }
+      DB.nodes.push({id:uid(),parentId,level,title:v.title.trim(),detail:v.detail.trim(),why:v.why.trim(),
+        deadline:v.deadline,status:v.status,progress:Number(v.progress)||0,
+        order:childrenOf(parentId).length,updatedAt:todayStr(),log:[]});
+      save(); go("node",parentId); toast(lv.label+"を追加しました");
+    }});
+}
+function editNode(id){
+  const n=nodeById(id); if(!n||n.isGenre) return;
+  openModal({title:LEVELS[n.level].label+"を編集",sub:LEVELS[n.level].hint,
+    fields:nodeFields({level:n.level,value:n}),
+    onSave:v=>{
+      if(!v.title.trim()){ toast("タイトルを入力してください"); return false; }
+      const changed = n.status!==v.status || String(n.progress)!==String(v.progress) || n.deadline!==v.deadline;
+      Object.assign(n,{title:v.title.trim(),detail:v.detail.trim(),why:v.why.trim(),
+        deadline:v.deadline,status:v.status,progress:Number(v.progress)||0});
+      if(changed) touch(n); else touch(n);
+      save(); go("node",id); toast("保存しました");
+    }});
+}
+function removeNode(id){
+  const n=nodeById(id); if(!n||n.isGenre) return;
+  const c=countAll(id);
+  const msg=c?`「${n.title}」と、その下の ${c} 件をまとめて削除します。よろしいですか？（あとで「元に戻す」を押せば戻せます）`
+             :`「${n.title}」を削除します。よろしいですか？`;
+  if(!confirm(msg)) return;
+  const pid=n.parentId; deleteNodeWithUndo(id); go("node",pid);
+}
+function moveOrderUI(id,dir){ moveOrder(id,dir); go("node",id); }
+function addLogModal(id){
+  const n=nodeById(id); if(!n||n.isGenre) return;
+  openModal({title:"ふりかえりを書く",sub:`「${n.title}」について、今の状況・気づき・つまずきを一言残します。日付つきで積み上がります。`,
+    fields:[{k:"t",label:"今日のふりかえり",type:"textarea",value:"",ph:"例）想定より時間がかかっている。来月は範囲を狭めて進める。"}],
+    onSave:v=>{ if(!v.t.trim()){ toast("内容を入力してください"); return false; }
+      n.log.push({d:todayStr(),t:v.t.trim()}); touch(n); save(); go(currentView); toast("書きました"); }});
+}
+function delLog(id,i){ const n=nodeById(id); if(!n) return;
+  if(!confirm("このふりかえりを削除しますか？")) return;
+  n.log.splice(i,1); save(); go(currentView); }
+function reparentModal(id){
+  const n=nodeById(id);
+  const opts=[];
+  GENRES.forEach(g=>{
+    opts.push({v:g.id,t:g.title});
+    descendantIds(g.id).forEach(cid=>{
+      const c=nodeById(cid);
+      if(!c||cid===id||descendantIds(id).includes(cid)) return;
+      if(!LEVELS[c.level].child) return;
+      opts.push({v:cid,t:"　".repeat(lvOrder(c.level))+"└ "+c.title});
+    });
+  });
+  openModal({title:"別の目標の下へ移す",
+    sub:`「${n.title}」を、下位項目ごと別の場所へ移します。階層（大目標／中目標…）は移動先に合わせて自動で変わります。`,
+    fields:[{k:"p",label:"移動先",type:"select",value:n.parentId,options:opts.map(o=>o.t),
+             optionValues:opts.map(o=>o.v)}],
+    onSave:v=>{ if(reparent(id,v.p)){ go("node",id); toast("移しました"); } else return false; }});
+}
+
+/* =========================================================
+   今月の見直し
+   ========================================================= */
+let reviewMonth=null;
+function ymKey(d){ return `${d.getFullYear()}-${p2(d.getMonth()+1)}`; }
+function renderReview(){
+  if(!reviewMonth) reviewMonth=ymKey(new Date());
+  const [ry,rm]=reviewMonth.split("-").map(Number);
+  const monthStart=new Date(ry,rm-1,1), monthEnd=new Date(ry,rm,0);
+  const inRange=(ds,a,b)=>{ const x=new Date(ds+"T00:00:00"); return x>=a&&x<=b; };
+  let h=topNotices();
+
+  h+=`<div class="periodnav">
+    <button onclick="shiftReview(-1)">◀ 前の月</button>
+    <span class="pv">${ry}年${rm}月</span>
+    <button onclick="shiftReview(1)">次の月 ▶</button>
+    <button onclick="reviewMonth=null;go('review')">今月に戻る</button>
+  </div>`;
+
+  h+=`<div class="reviewbox">
+    <h2 class="sec" style="margin-top:0">${ry}年${rm}月のふりかえり　<span class="sec-note">この月に何が進み、何を変えるか</span></h2>
+    <textarea id="revText" placeholder="例）仕事は前進したが健康が止まった。来月はランを週2に落として確実に続ける。">${esc((DB.reviews[reviewMonth]||{}).text||"")}</textarea>
+    <div style="margin-top:10px"><button class="btn primary" onclick="saveReview()">この月のふりかえりを保存</button></div>
+  </div>`;
+
+  const od=overdueList();
+  h+=`<h2 class="sec ${od.length?"warn":""}">① 期限を過ぎたもの　<span class="sec-note">${od.length}件</span></h2>`;
+  if(od.length){ od.forEach(({n,d})=>{ h+=revCardHTML(n,d,true); }); }
+  else h+=`<div class="empty-note">期限を過ぎた目標はありません。</div>`;
+
+  const nextEnd=new Date(ry,rm+1,0);
+  const near=DB.nodes.filter(n=>n.deadline&&n.status!=="達成"&&inRange(n.deadline,monthStart,nextEnd))
+    .sort((a,b)=>a.deadline.localeCompare(b.deadline));
+  h+=`<h2 class="sec">② この月・来月が期限のもの　<span class="sec-note">${near.length}件</span></h2>`;
+  if(near.length){ near.forEach(n=>{ h+=revCardHTML(n,daysLeft(n.deadline),false); }); }
+  else h+=`<div class="empty-note">この期間に期限を決めた目標はありません。</div>`;
+
+  const stale=DB.nodes.filter(n=>n.status!=="達成"&&n.status!=="保留")
+    .map(n=>({n,s:daysSince(n.updatedAt)})).filter(x=>x.s!==null&&x.s>=90)
+    .sort((a,b)=>b.s-a.s).slice(0,12);
+  h+=`<h2 class="sec">③ 90日以上さわっていないもの　<span class="sec-note">${stale.length}件 — 忘れていないか確認</span></h2>`;
+  if(stale.length){ stale.forEach(({n,s})=>{ h+=revCardHTML(n,daysLeft(n.deadline),false,`${s}日 更新なし`); }); }
+  else h+=`<div class="empty-note">長く放置している目標はありません。</div>`;
+
+  h+=`<h2 class="sec">年に一度：計画を作り直す</h2>
+  <div class="reviewbox">
+    <div style="font-size:13.5px;color:var(--ink2);margin-bottom:10px">${ry}年のふりかえり（できたこと／できなかったこと／来年へ）</div>
+    <textarea id="revYear" placeholder="例）大目標は変えない。中目標の期限が甘かったので1年後ろへ。来年は健康を最優先にする。">${esc((DB.reviews["Y"+ry]||{}).text||"")}</textarea>
+    <div style="margin-top:10px"><button class="btn primary" onclick="saveYearReview(${ry})">${ry}年のふりかえりを保存</button></div>
+  </div>`;
+  el("v-review").innerHTML=h;
+}
+function revCardHTML(n,d,isOver,extra){
+  const g=genreOf(n.id);
+  return `<div class="rev-card ${isOver?"over":""}" style="${isOver?"":"border-left-color:"+(g?g.color:"var(--navy2)")}">
+    <div class="rev-top">
+      <button class="rev-title" onclick="openNode('${n.id}')">${esc(n.title||"（無題）")}</button>
+      <span class="chip st${statusIdx(n.status)}">${esc(n.status)}</span>
+      ${deadlineChip(n,d)}
+      ${extra?`<span class="chip dl">${esc(extra)}</span>`:""}
+      <span style="font-size:11.5px;color:var(--ink3)">${esc(LEVELS[n.level].label)}</span>
+    </div>
+    <div class="rev-path">${esc(pathLabel(n.id))}</div>
+    ${n.detail?`<div class="rev-detail">${esc(n.detail)}</div>`:""}
+    <div class="rowbtns">
+      <button onclick="quickStatus('${n.id}','達成')">✓ 達成にする</button>
+      <button onclick="quickDeadline('${n.id}')">📅 期限を引き直す</button>
+      <button onclick="quickStatus('${n.id}','保留')">⏸ 保留にする</button>
+      <button onclick="addLogModal('${n.id}')">📝 ふりかえりを書く</button>
+      <button onclick="editNode('${n.id}')">✏️ 編集</button>
+    </div></div>`;
+}
+function shiftReview(k){
+  const [y,m]=reviewMonth.split("-").map(Number);
+  const d=new Date(y,m-1+k,1); reviewMonth=ymKey(d); go("review");
+}
+function saveReview(){
+  const t=el("revText").value;
+  DB.reviews[reviewMonth]={text:t,savedAt:todayStr()}; save(); toast("ふりかえりを保存しました");
+}
+function saveYearReview(y){
+  DB.reviews["Y"+y]={text:el("revYear").value,savedAt:todayStr()}; save(); toast(y+"年のふりかえりを保存しました");
+}
+function quickStatus(id,st){
+  const n=nodeById(id); if(!n||n.isGenre) return;
+  n.status=st; if(st==="達成") n.progress=100; touch(n); save(); go(currentView); toast(st+"にしました");
+}
+function quickDeadline(id){
+  const n=nodeById(id); if(!n||n.isGenre) return;
+  openModal({title:"期限を引き直す",sub:`「${n.title}」の実現目標日を変えます。ずれたら遠慮なく引き直しましょう。`,
+    fields:[{k:"deadline",label:"新しい実現目標日",type:"date",value:n.deadline},
+            {k:"t",label:"なぜ変えるのか（任意）",hint:"ふりかえりメモに残ります",type:"textarea",value:"",ph:"例）想定より準備に時間がかかったため3ヶ月後ろ倒し"}],
+    onSave:v=>{ const old=n.deadline; n.deadline=v.deadline;
+      if(v.t.trim()) n.log.push({d:todayStr(),t:`期限変更 ${fmtDate(old)||"未設定"} → ${fmtDate(v.deadline)||"未設定"}：${v.t.trim()}`});
+      touch(n); save(); go(currentView); toast("期限を変えました"); }});
+}
+
+/* =========================================================
+   ツリー
+   ========================================================= */
+function isOpen(id){ return DB.ui.openTree.includes(id); }
+function renderTree(){
+  let h=topNotices();
+  h+=`<h2 class="sec">目標ツリー　<span class="sec-note">決めたことを一望できます</span></h2>
+  <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn sm" onclick="treeAll(true)">すべて開く</button>
+    <button class="btn sm" onclick="treeAll(false)">すべて閉じる</button></div>
+  <div class="tree">
+    <div class="trow" style="background:var(--bg);border-radius:9px">
+      <span style="width:20px"></span><span class="tdot" style="background:var(--navy)"></span>
+      <span class="ttitle"><span class="lv">究極の目標</span>${esc(DB.settings.ultimateGoal||"（未設定）")}</span></div>
+    <div class="tkids">`;
+  GENRES.forEach(g=>{ h+=treeNodeHTML(g.id,g.color); });
+  h+=`</div></div>`;
+  el("v-tree").innerHTML=h;
+}
+function treeNodeHTML(id,color){
+  const n=nodeById(id); if(!n) return "";
+  const kids=childrenOf(id), open=isOpen(id), d=daysLeft(n.deadline);
+  let meta="";
+  if(!n.isGenre){
+    const over=d!==null&&d<0&&n.status!=="達成"&&n.status!=="保留";
+    meta=`<span class="tmeta" style="${over?"color:var(--danger);font-weight:700":""}">${esc(n.status)}${n.deadline?" ・"+fmtDate(n.deadline):""}${over?` ・${Math.abs(d)}日超過`:""}</span>`;
+  } else if(kids.length){ meta=`<span class="tmeta">${kids.length}</span>`; }
+  let h=`<div class="tnode"><div class="trow">
+    <button class="tcaret ${kids.length?"":"leaf"} ${open?"open":""}" onclick="toggleTree('${id}')">▶</button>
+    <span class="tdot" style="background:${color}"></span>
+    <button class="ttitle" onclick="openNode('${id}')">
+      <span class="lv">${esc(LEVELS[n.level].label)}</span>${esc(n.title||"（無題）")}
+      ${n.detail?`<span class="dt">${esc(n.detail)}</span>`:""}</button>${meta}</div>`;
+  if(open&&kids.length){ h+=`<div class="tkids">`; kids.forEach(k=>{ h+=treeNodeHTML(k.id,color); }); h+=`</div>`; }
+  return h+`</div>`;
+}
+function toggleTree(id){
+  const i=DB.ui.openTree.indexOf(id);
+  if(i>=0) DB.ui.openTree.splice(i,1); else DB.ui.openTree.push(id);
+  save(); renderTree();
+}
+function treeAll(open){
+  DB.ui.openTree = open ? GENRES.flatMap(g=>[g.id,...descendantIds(g.id)]) : [];
+  save(); renderTree();
+}
+
+/* =========================================================
+   未来年表
+   ========================================================= */
+function renderTimeline(){
+  const s=DB.settings, withDate=DB.nodes.filter(n=>n.deadline);
+  const years=withDate.map(n=>Number(n.deadline.slice(0,4))).filter(y=>y>1900);
+  const thisYear=new Date().getFullYear();
+  const start=Math.min(Number(s.startYear)||thisYear, years.length?Math.min(...years):thisYear);
+  const end=Math.max(start+9, years.length?Math.max(...years):start+9);
+  const birthYear=s.birthday?Number(s.birthday.slice(0,4)):null;
+  let h=topNotices();
+  h+=`<h2 class="sec">未来年表　<span class="sec-note">何年に何を実現すると決めたか</span></h2>`;
+  for(let y=start;y<=Math.min(end,start+70);y++){
+    const items=withDate.filter(n=>Number(n.deadline.slice(0,4))===y)
+      .sort((a,b)=>a.deadline.localeCompare(b.deadline)||lvOrder(a.level)-lvOrder(b.level));
+    if(!items.length&&y>start+11) continue;
+    h+=`<div class="yearblock"><div><div class="yb-year">${y}</div>
+      ${birthYear?`<div class="yb-age">${y-birthYear}歳</div>`:""}</div><div class="yb-items">`;
+    if(items.length){
+      items.forEach(n=>{ const g=genreOf(n.id), d=daysLeft(n.deadline);
+        const over=d!==null&&d<0&&n.status!=="達成"&&n.status!=="保留";
+        h+=`<div class="yb-item">
+          <span class="yl" style="background:${g?g.color:"var(--navy2)"}">${esc(g?g.title:"")}</span>
+          <button onclick="openNode('${n.id}')">${esc(n.title)}</button>
+          <span style="font-size:11.5px;color:${over?"var(--danger)":"var(--ink3)"}">${esc(LEVELS[n.level].label)}・${fmtDate(n.deadline)}${over?"（超過）":""}</span></div>`; });
+    } else h+=`<div class="yb-empty">（この年に期限を決めた目標はありません）</div>`;
+    h+=`</div></div>`;
+  }
+  el("v-timeline").innerHTML=h;
+}
+
+/* =========================================================
+   習慣（年月つき）
+   ========================================================= */
+const habState={daily:null,weekly:null,monthly:null};
+function daysInMonth(y,m){ return new Date(y,m,0).getDate(); }
+function weekOfYear(d){
+  const s=new Date(d.getFullYear(),0,1);
+  return Math.ceil(((d-s)/86400000+s.getDay()+1)/7);
+}
+function renderHabits(){
+  const now=new Date();
+  if(!habState.daily) habState.daily=ymKey(now);
+  if(!habState.weekly) habState.weekly=now.getFullYear();
+  if(!habState.monthly) habState.monthly=now.getFullYear();
+  const [dy,dm]=habState.daily.split("-").map(Number);
+  const nDays=daysInMonth(dy,dm);
+  const curYM=ymKey(now), curDay=now.getDate(), curWeek=weekOfYear(now), curYear=now.getFullYear();
+  const startY=Number(DB.settings.startYear)||curYear;
+
+  let h=topNotices();
+  h+=`<h2 class="sec">習慣トラッカー　<span class="sec-note">続けると決めたことを、実行したら押す（記録は月・年ごとに残ります）</span></h2>`;
+
+  /* Daily */
+  h+=`<div class="hab-block"><div class="hab-title">【Daily】毎日の習慣</div>
+    <div class="periodnav"><button onclick="habShift('daily',-1)">◀</button>
+      <span class="pv">${dy}年${dm}月</span><button onclick="habShift('daily',1)">▶</button>
+      <button onclick="habState.daily=null;renderHabits()">今月</button></div><div class="hab-scroll">`;
+  h+=habTable(DB.habits.daily,"daily",habState.daily,nDays,i=>i+1,
+        (habState.daily===curYM?curDay-1:-1));
+  h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('daily')">＋ 習慣を追加</button></div>`;
+
+  /* Weekly */
+  h+=`<div class="hab-block"><div class="hab-title">【Weekly】毎週の習慣</div>
+    <div class="periodnav"><button onclick="habShift('weekly',-1)">◀</button>
+      <span class="pv">${habState.weekly}年（52週）</span><button onclick="habShift('weekly',1)">▶</button>
+      <button onclick="habState.weekly=null;renderHabits()">今年</button></div><div class="hab-scroll">`;
+  h+=habTable(DB.habits.weekly,"weekly",String(habState.weekly),52,i=>i+1,
+        (habState.weekly===curYear?curWeek-1:-1));
+  h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('weekly')">＋ 習慣を追加</button></div>`;
+
+  /* Monthly */
+  h+=`<div class="hab-block"><div class="hab-title">【Monthly】毎月の習慣</div>
+    <div class="periodnav"><button onclick="habShift('monthly',-1)">◀</button>
+      <span class="pv">${habState.monthly}年</span><button onclick="habShift('monthly',1)">▶</button>
+      <button onclick="habState.monthly=null;renderHabits()">今年</button></div><div class="hab-scroll">`;
+  h+=habTable(DB.habits.monthly,"monthly",String(habState.monthly),12,i=>(i+1)+"月",
+        (habState.monthly===curYear?now.getMonth():-1));
+  h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('monthly')">＋ 習慣を追加</button></div>`;
+
+  /* Yearly：年が列 */
+  h+=`<div class="hab-block"><div class="hab-title">【Yearly】毎年の習慣</div><div class="hab-scroll">`;
+  h+=habTable(DB.habits.yearly,"yearly","all",10,i=>(startY+i)+"年",
+        (curYear-startY>=0&&curYear-startY<10?curYear-startY:-1));
+  h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('yearly')">＋ 習慣を追加</button></div>`;
+  el("v-habits").innerHTML=h;
+}
+function habTable(list,kind,period,cols,head,todayIdx){
+  let h=`<table class="hab"><thead><tr><th>習慣</th>`;
+  for(let i=0;i<cols;i++) h+=`<th class="${i===todayIdx?"today":""}">${head(i)}</th>`;
+  h+=`<th>達成率</th><th></th></tr></thead><tbody>`;
+  (list||[]).forEach(hab=>{
+    const marks=(DB.habitMarks[hab.id]||{})[period]||{};
+    let done=0;
+    h+=`<tr><td><input class="hab-name" value="${esc(hab.name)}" onchange="renameHab('${kind}','${hab.id}',this.value)"></td>`;
+    for(let i=0;i<cols;i++){
+      const on=!!marks[i]; if(on) done++;
+      h+=`<td><button class="habcell ${on?"on":""} ${i===todayIdx?"todaycol":""}"
+        onclick="toggleHab('${hab.id}','${period}',${i})">${on?"○":""}</button></td>`;
+    }
+    h+=`<td class="hab-rate">${Math.round(done/cols*100)}%<br><span style="font-size:10.5px;color:var(--ink3);font-weight:600">${done}/${cols}</span></td>
+      <td><button class="habcell" title="削除" onclick="delHab('${kind}','${hab.id}')">×</button></td></tr>`;
+  });
+  if(!(list||[]).length) h+=`<tr><td colspan="${cols+3}" style="color:var(--ink3);font-size:12.5px;padding:10px">まだ習慣がありません。下のボタンで追加してください。</td></tr>`;
+  return h+`</tbody></table>`;
+}
+function habShift(kind,k){
+  if(kind==="daily"){ const [y,m]=habState.daily.split("-").map(Number);
+    habState.daily=ymKey(new Date(y,m-1+k,1)); }
+  else habState[kind]=Number(habState[kind])+k;
+  renderHabits();
+}
+function toggleHab(id,period,i){
+  DB.habitMarks[id]=DB.habitMarks[id]||{};
+  DB.habitMarks[id][period]=DB.habitMarks[id][period]||{};
+  if(DB.habitMarks[id][period][i]) delete DB.habitMarks[id][period][i];
+  else DB.habitMarks[id][period][i]=true;
+  save(); renderHabits();
+}
+function addHab(k){ DB.habits[k].push({id:uid(),name:"新しい習慣"}); save(); renderHabits(); }
+function renameHab(k,id,v){ const x=DB.habits[k].find(h=>h.id===id); if(x){ x.name=v; save(); } }
+function delHab(k,id){ if(!confirm("この習慣を削除しますか？（記録も消えます）")) return;
+  DB.habits[k]=DB.habits[k].filter(h=>h.id!==id); delete DB.habitMarks[id]; save(); renderHabits(); }
+
+/* =========================================================
+   検索
+   ========================================================= */
+function renderSearch(){
+  const q=searchQuery.trim();
+  let h=`<h2 class="sec">「${esc(q)}」の検索結果</h2>`;
+  if(!q){ el("v-search").innerHTML=h+`<div class="empty-note">探したい言葉を上の検索欄に入れてください。</div>`; return; }
+  const lower=q.toLowerCase();
+  const hit=DB.nodes.filter(n=>{
+    const hay=[n.title,n.detail,n.why,...(n.log||[]).map(l=>l.t)].join("\n").toLowerCase();
+    return hay.includes(lower);
+  });
+  if(!hit.length){ el("v-search").innerHTML=h+`<div class="empty-note">見つかりませんでした。</div>`; return; }
+  h+=`<div class="sec-note" style="margin-bottom:12px">${hit.length}件</div><div class="child-grid">`;
+  hit.forEach(n=>{ h+=childCardHTML(n,{showPath:true}); });
+  el("v-search").innerHTML=h+`</div>`;
+}
+
+/* =========================================================
+   設定・保存
+   ========================================================= */
+function renderData(){
+  const s=DB.settings;
+  let h=topNotices();
+  h+=`<h2 class="sec">設定</h2><div class="setgrid">
+  <div class="card"><h3>あなたの情報</h3>
+    <p>生年月日を入れると、人生時計（残り日数）が表示されます。</p>
+    <div class="f"><label>お名前</label><input type="text" id="stName" value="${esc(s.name)}"></div>
+    <div class="f"><label>生年月日</label><input type="date" id="stBirth" value="${esc(s.birthday)}"></div>
+    <div class="f"><label>目標寿命（歳）</label><input type="number" id="stAge" value="${esc(s.targetAge)}" min="1" max="130"></div>
+    <div class="f"><label>計画の起点（年表・毎年の習慣の開始年）</label><input type="number" id="stYear" value="${esc(s.startYear)}" min="1900" max="2200"></div>
+    <button class="btn primary" onclick="saveSettings()">保存する</button></div>
+  <div class="card"><h3>バックアップ</h3>
+    <p>データはこのパソコンのブラウザ内に自動保存されます。念のため、ときどきファイルに書き出しておくと安心です。</p>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn primary" onclick="exportJSON()">💾 ファイルに書き出す</button>
+      <button class="btn" onclick="el('importFile').click()">📂 読み込む</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importJSON(this)"></div>
+    <p style="margin-top:14px;font-size:12px;color:var(--ink3)">※ ブラウザの履歴やサイトデータを消すと保存内容も消えます。読み込むと今のデータは置き換わるので、先に書き出しておくと安全です。</p></div>
+  <div class="card"><h3>同期（GitHub）— 端末をまたいで同じデータを使う</h3>
+    <p>あなたの<b>非公開リポジトリ</b>にデータを自動保存します。新しいパソコンやスマホでも、ここに同じ設定を入れれば続きから使えます。</p>
+    <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:15px;font-size:12.5px">
+      状態：<b>${syncState==="ok"?"✅ 同期済み":syncState==="off"?"未設定":syncState==="pending"?"⏳ 保存待ち":syncState==="syncing"?"⏳ 同期中":syncState==="conflict"?"⚠ 要確認":"⚠ エラー"}</b>
+      ${syncMsg?`<div style="color:var(--ink2);margin-top:3px">${esc(syncMsg)}</div>`:""}
+      ${SYNC.lastSyncAt?`<div style="color:var(--ink3);margin-top:3px">最終同期：${esc(fmtTime(SYNC.lastSyncAt))}</div>`:""}
+    </div>
+    <div class="f"><label>GitHubのユーザー名<span class="hint">例）kaisei</span></label><input type="text" id="syOwner" value="${esc(SYNC.owner)}" placeholder="あなたのGitHubユーザー名"></div>
+    <div class="f"><label>データ用リポジトリ名<span class="hint">必ず非公開(Private)で作る</span></label><input type="text" id="syRepo" value="${esc(SYNC.repo)}" placeholder="yume-techo-data"></div>
+    <div class="f"><label>ファイル名</label><input type="text" id="syPath" value="${esc(SYNC.path)}" placeholder="data.json"></div>
+    <div class="f"><label>アクセストークン<span class="hint">この端末にのみ保存。書き出しファイルには含まれません</span></label>
+      <input type="password" id="syToken" value="${SYNC.token?"********":""}" placeholder="github_pat_..." autocomplete="off"></div>
+    <div class="f"><label style="display:flex;align-items:center;gap:8px;font-weight:600">
+      <input type="checkbox" id="syAuto" ${SYNC.auto?"checked":""} style="width:auto"> 書くたびに自動で同期する</label></div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn primary" onclick="saveSyncSettings()">設定を保存</button>
+      <button class="btn" onclick="syncTest()">接続をためす</button>
+      <button class="btn" onclick="syncPull(false)">GitHubから読み込む</button>
+      <button class="btn" onclick="syncPush(false)">今すぐ保存</button>
+      <button class="btn danger" onclick="syncDisconnect()">解除</button></div>
+    <p style="margin-top:14px;font-size:12px;color:var(--ink3)">※ トークンは他人に見せないでください。端末を手放すときは、GitHubの設定でそのトークンを削除(Revoke)すれば安全です。</p>
+    <details style="margin-top:14px">
+      <summary style="cursor:pointer;font-weight:700;font-size:13px;color:var(--navy2)">はじめての設定・新しい端末での設定はこちら</summary>
+      <div style="font-size:12.5px;color:var(--ink2);line-height:1.9;margin-top:10px">
+        <b style="color:var(--ink)">A. 最初に1回だけ（まだデータ置き場を作っていない場合）</b><br>
+        1. GitHubで<b>非公開(Private)</b>のリポジトリを作る。名前は <code>yume-techo-data</code> など。作成時に「Add a README file」にチェック。<br>
+        2. GitHubの Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b> → Generate new token。<br>
+        3. Repository access で「Only select repositories」→ 1で作ったリポジトリを選ぶ。<br>
+        4. Permissions → Repository permissions → <b>Contents</b> を <b>Read and write</b> にする。<br>
+        5. 発行された <code>github_pat_...</code> をコピーし、上の欄に貼って「設定を保存」→「接続をためす」→「今すぐ保存」。<br><br>
+        <b style="color:var(--ink)">B. 新しいパソコン・スマホで続きから使う</b><br>
+        1. このページを開く。<br>
+        2. 上の4つ（ユーザー名・リポジトリ名・ファイル名・トークン）を同じように入れて「設定を保存」。<br>
+        3. 「GitHubから読み込む」を押す。これで続きから使えます。<br><br>
+        <span style="color:var(--ink3)">※ トークンには期限があります。切れると「同期エラー」になるので、新しく作り直して入れ直してください。<br>
+        ※ 同期は https のページか、パソコンの「手帳をひらく.bat」から開いたときに動きます。HTMLを直接ダブルクリックした場合は動きません。</span>
+      </div>
+    </details></div>
+  <div class="card"><h3>整理</h3>
+    <p>全部消してまっさらにする／例を読み込んで動きを見る、ができます。</p>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn danger" onclick="wipeAll()">すべて消してまっさらにする</button>
+      <button class="btn" onclick="loadSample()">例（サンプル）を読み込む</button></div>
+    <p style="margin-top:12px;font-size:12px;color:var(--ink3)">※「すべて消す」は目標・究極の目標・習慣・ふりかえりを削除します（生年月日などの設定は残ります）。</p></div></div>`;
+
+  const revKeys=Object.keys(DB.reviews).filter(k=>(DB.reviews[k].text||"").trim()).sort().reverse();
+  if(revKeys.length){
+    h+=`<h2 class="sec">これまでのふりかえり</h2><div class="card">`;
+    revKeys.forEach(k=>{
+      const label=k.startsWith("Y")?`${k.slice(1)}年（年次）`:`${k.split("-")[0]}年${Number(k.split("-")[1])}月`;
+      h+=`<div class="logitem"><span class="ld">${esc(label)}</span><span class="lt">${esc(DB.reviews[k].text)}</span></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  h+=`<h2 class="sec">この手帳の考え方</h2><div class="card">
+    <p style="margin:0 0 10px"><b>大きいところから決めて、細かく分けていきます。</b></p>
+    <div style="font-size:13.5px;color:var(--ink2);line-height:2">
+      究極の目標（人生をかけて実現したいこと）<br>
+      　└ 6分野（健康・心・教養・家庭・仕事・経済）<br>
+      　　└ 大目標　…… 10〜20年で成し遂げたいこと（戦略）<br>
+      　　　└ 中目標　…… 数年で到達したい状態<br>
+      　　　　└ 単年度目標　…… 今年ここまで<br>
+      　　　　　└ 四半期・月次目標　…… 3ヶ月〜1ヶ月の到達点<br>
+      　　　　　　└ やりたいこと・行動　…… 実際にやること（戦術）</div>
+    <p style="margin-top:14px">どの画面でも「この目標は何のためか」が上に出るので、日々の行動と究極の目標がつながったままになります。毎月は「今月の見直し」で期限切れと放置を片付け、年末に年次のふりかえりを書いて計画を作り直します。</p></div>`;
+  el("v-data").innerHTML=h;
+}
+function saveSettings(){
+  DB.settings.name=el("stName").value;
+  DB.settings.birthday=el("stBirth").value;
+  DB.settings.targetAge=Number(el("stAge").value)||90;
+  DB.settings.startYear=Number(el("stYear").value)||new Date().getFullYear();
+  save(); go("data"); toast("保存しました");
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); const d=new Date();
+  a.href=URL.createObjectURL(blob);
+  a.download=`夢がかなう手帳_${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}.json`;
+  a.click(); URL.revokeObjectURL(a.href); toast("書き出しました");
+}
+function importJSON(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(!d||typeof d!=="object"||!Array.isArray(d.nodes)) throw new Error("形式が違います");
+      if(!confirm("いまのデータを、読み込むファイルの内容で置き換えます。よろしいですか？")) return;
+      DB=d; normalize(); save(); go("home"); toast("読み込みました");
+    }catch(e){ alert("読み込めませんでした："+e.message); } input.value=""; };
+  r.readAsText(f);
+}
+function wipeAll(){
+  if(!confirm("目標・究極の目標・習慣・ふりかえりをすべて削除します。よろしいですか？")) return;
+  const st=DB.settings;
+  DB=blankDB();
+  DB.settings=Object.assign(DB.settings,{name:st.name,birthday:st.birthday,targetAge:st.targetAge,startYear:st.startYear,isSample:false});
+  save(); go("home"); toast("すべて消しました");
+}
+function loadSample(){
+  if(DB.nodes.length||DB.settings.ultimateGoal){
+    if(!confirm("いまの内容を例（サンプル）で置き換えます。よろしいですか？")) return;
+  }
+  DB=sampleDB(); save(); go("home"); toast("例を読み込みました");
+}
+
+/* =========================================================
+   モーダル
+   ========================================================= */
+let modalEl=null;
+function openModal(cfg){
+  closeModal();
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  const m=document.createElement("div"); m.className="modal";
+  let h=`<h3>${esc(cfg.title)}</h3>`;
+  if(cfg.sub) h+=`<div class="mh-sub">${esc(cfg.sub)}</div>`;
+  cfg.fields.forEach(f=>{
+    if(f.type==="hidden"){ h+=`<input type="hidden" id="mf_${f.k}" value="${esc(f.value)}">`; return; }
+    h+=`<div class="f"><label>${esc(f.label)}${f.hint?`<span class="hint">${esc(f.hint)}</span>`:""}</label>`;
+    if(f.type==="textarea") h+=`<textarea id="mf_${f.k}" placeholder="${esc(f.ph||"")}">${esc(f.value||"")}</textarea>`;
+    else if(f.type==="select"){
+      h+=`<select id="mf_${f.k}">`;
+      f.options.forEach((o,i)=>{ const val=f.optionValues?f.optionValues[i]:o;
+        h+=`<option value="${esc(val)}" ${val===f.value?"selected":""}>${esc(o)}</option>`; });
+      h+=`</select>`;
+    }
+    else if(f.type==="range") h+=`<div class="rangebox"><input type="range" id="mf_${f.k}" min="0" max="100" step="5" value="${esc(f.value||0)}" oninput="el('rngv').textContent=this.value+'%'"><b id="rngv">${esc(f.value||0)}%</b></div>`;
+    else h+=`<input type="${f.type}" id="mf_${f.k}" value="${esc(f.value||"")}" placeholder="${esc(f.ph||"")}">`;
+    h+=`</div>`;
+  });
+  h+=`<div class="modal-btns"><button class="btn" id="mCancel">キャンセル</button><button class="btn primary" id="mSave">保存</button></div>`;
+  m.innerHTML=h; bg.appendChild(m); document.body.appendChild(bg); modalEl=bg;
+  const first=m.querySelector("input,textarea,select"); if(first) setTimeout(()=>first.focus(),40);
+  m.querySelector("#mCancel").onclick=closeModal;
+  m.querySelector("#mSave").onclick=()=>{
+    const v={}; cfg.fields.forEach(f=>{ const e=el("mf_"+f.k); v[f.k]=e?e.value:""; });
+    if(cfg.onSave(v)!==false) closeModal();
+  };
+  bg.onclick=e=>{ if(e.target===bg) closeModal(); };
+  document.addEventListener("keydown",escClose);
+}
+function openChoice(cfg){
+  closeModal();
+  const bg=document.createElement("div"); bg.className="modal-bg";
+  const m=document.createElement("div"); m.className="modal";
+  m.innerHTML=`<h3>${esc(cfg.title)}</h3>${cfg.sub?`<div class="mh-sub">${esc(cfg.sub)}</div>`:""}
+    ${cfg.html||""}<div class="modal-btns" id="choiceBtns"></div>`;
+  bg.appendChild(m); document.body.appendChild(bg); modalEl=bg;
+  const box=m.querySelector("#choiceBtns");
+  (cfg.buttons||[]).slice().reverse().forEach(b=>{
+    const btn=document.createElement("button");
+    btn.className="btn"+(b.primary?" primary":"")+(b.danger?" danger":"");
+    btn.textContent=b.label;
+    btn.onclick=()=>{ closeModal(); b.fn&&b.fn(); };
+    box.prepend(btn);
+  });
+  document.addEventListener("keydown",escClose);
+}
+function closeModal(){ if(modalEl){ modalEl.remove(); modalEl=null; document.removeEventListener("keydown",escClose); } }
+function escClose(e){ if(e.key==="Escape") closeModal(); }
+
+/* =========================================================
+   起動
+   ========================================================= */
+el("ultimateText").onclick=editUltimate;
+el("searchBox").addEventListener("input",e=>{
+  searchQuery=e.target.value;
+  if(searchQuery.trim()) go("search"); else if(currentView==="search") go("home");
+});
+storageOK=probeStorage();
+loadSync();
+load();
+go("home");
+renderSyncChip();
+if(syncReady()) syncPull(true);
+/* 画面を離れるときに、保存待ちがあれば追い出す */
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="hidden"&&syncState==="pending"){ clearTimeout(syncTimer); syncPush(false); }
+});
+window.addEventListener("online",()=>{ if(syncReady()&&(syncState==="error"||syncState==="pending")) syncPush(false); });
+</script>
+</body>
+</html>
