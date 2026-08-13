@@ -564,13 +564,26 @@ function topNotices(){ return storageWarnHTML()+sampleBarHTML(); }
    バックアップJSONには絶対に含めません。
    ========================================================= */
 const SKEY="yumeTecho_sync_v1";
-let SYNC={token:"",owner:"",repo:"",path:"data.json",auto:true,lastSha:"",lastSyncAt:"",device:""};
+let SYNC={token:"",owner:"",repo:"",path:"data.json",auto:true,lastSha:"",lastSyncAt:"",lastRev:-1,device:""};
 let syncState="off", syncMsg="", syncTimer=null, syncBusy=false, syncQueued=false;
 
+/* 実際に一度でも通信が成功したときだけ「同期済み」と表示する。
+   欄が埋まっているだけの状態は「未同期」。 */
+function initialSyncState(){
+  if(!syncReady()) return "off";
+  return SYNC.lastSyncAt?"ok":"ready";
+}
 function loadSync(){
   try{ const raw=localStorage.getItem(SKEY); if(raw) SYNC=Object.assign(SYNC,JSON.parse(raw)); }catch(e){}
   if(!SYNC.device) SYNC.device=guessDevice();
-  syncState=syncReady()?"ok":"off";
+  if(typeof SYNC.lastRev!=="number") SYNC.lastRev=-1;
+  syncState=initialSyncState();
+}
+/* この端末で、最後に同期してから何も書き換えていないか */
+function localUnchanged(){ return SYNC.lastRev>=0 && (Number(DB.meta.rev)||0)===SYNC.lastRev; }
+function markSynced(sha){
+  SYNC.lastSha=sha; SYNC.lastRev=Number(DB.meta.rev)||0;
+  SYNC.lastSyncAt=new Date().toISOString(); saveSync();
 }
 function saveSync(){ try{ localStorage.setItem(SKEY,JSON.stringify(SYNC)); }catch(e){} }
 function syncReady(){ return !!(SYNC.token&&SYNC.owner&&SYNC.repo&&SYNC.path); }
@@ -630,7 +643,7 @@ async function ghPut(obj,sha){
 function setSyncState(s,msg){ syncState=s; syncMsg=msg||""; renderSyncChip(); }
 function renderSyncChip(){
   const e=el("syncStatus"); if(!e) return;
-  const map={off:["同期オフ","off"],ok:["同期済み","ok"],pending:["保存待ち","pending"],
+  const map={off:["同期オフ","off"],ready:["未同期","pending"],ok:["同期済み","ok"],pending:["保存待ち","pending"],
              syncing:["同期中…","pending"],error:["同期エラー","err"],conflict:["要確認","err"]};
   const m=map[syncState]||map.off;
   e.className="syncchip "+m[1]; e.textContent=m[0];
@@ -656,12 +669,14 @@ async function syncPush(force){
   try{
     const rem=await ghFetchRemote();
     if(rem.exists && !force && rem.sha!==SYNC.lastSha){
+      /* この端末で何も書き換えていないなら、競合ではなく単に相手が新しいだけ */
+      if(localUnchanged()){ syncBusy=false; adoptRemote(rem,true); return; }
       syncBusy=false;
       setSyncState("conflict","GitHub側に、この端末が知らない変更があります");
       showConflict(rem,!SYNC.lastSha); return;
     }
     const sha=await ghPut(DB,rem.exists?rem.sha:null);
-    SYNC.lastSha=sha; SYNC.lastSyncAt=new Date().toISOString(); saveSync();
+    markSynced(sha);
     setSyncState("ok");
   }catch(e){ setSyncState("error",e.message); }
   syncBusy=false;
@@ -681,16 +696,18 @@ async function syncPull(silent){
     const localEmpty=!DB.nodes.length&&!DB.settings.ultimateGoal;
     if(localEmpty){ adoptRemote(rem,true); return; }
     if(rem.sha===SYNC.lastSha){ setSyncState("ok"); if(!silent) toast("最新の状態です"); return; }
+    /* この端末で何も書き換えていないなら、迷わずGitHub側を取り込む（別端末で進めた場合） */
+    if(localUnchanged()){ adoptRemote(rem,silent); return; }
     setSyncState("conflict","GitHub側に、この端末が知らない変更があります");
     showConflict(rem,!SYNC.lastSha);
   }catch(e){ setSyncState("error",e.message); if(!silent) toast("同期できませんでした："+e.message,null,5000); }
 }
 function adoptRemote(rem,silent){
   DB=rem.data; normalize();
-  SYNC.lastSha=rem.sha; SYNC.lastSyncAt=new Date().toISOString(); saveSync();
+  markSynced(rem.sha);
   save({noBump:true,noSync:true});
   setSyncState("ok"); go("home");
-  toast(silent?"GitHubから読み込みました":"GitHubの内容を取り込みました");
+  toast(silent?"GitHubから最新を読み込みました":"GitHubの内容を取り込みました");
 }
 function showConflict(rem,firstTime){
   const L={when:fmtTime(DB.meta&&DB.meta.updatedAt),n:nodeCount(DB),dev:(DB.meta&&DB.meta.device)||"この端末"};
@@ -741,12 +758,13 @@ function saveSyncSettings(){
   const tk=el("syToken").value.trim();
   if(tk&&tk!=="********") SYNC.token=tk;
   SYNC.auto=el("syAuto").checked;
-  saveSync(); setSyncState(syncReady()?"ok":"off");
-  go("data"); toast("同期の設定を保存しました");
+  saveSync(); setSyncState(initialSyncState());
+  go("data");
+  toast(syncReady()?"保存しました。「接続をためす」で確認してください":"すべての欄を入力してください");
 }
 function syncDisconnect(){
   if(!confirm("同期を解除します。この端末の中のデータは残ります。よろしいですか？")) return;
-  SYNC={token:"",owner:"",repo:"",path:"data.json",auto:true,lastSha:"",lastSyncAt:"",device:SYNC.device};
+  SYNC={token:"",owner:"",repo:"",path:"data.json",auto:true,lastSha:"",lastSyncAt:"",lastRev:-1,device:SYNC.device};
   saveSync(); setSyncState("off"); go("data"); toast("同期を解除しました");
 }
 function touch(n){ n.updatedAt=todayStr(); }
@@ -1479,7 +1497,8 @@ function renderData(){
   <div class="card"><h3>同期（GitHub）— 端末をまたいで同じデータを使う</h3>
     <p>あなたの<b>非公開リポジトリ</b>にデータを自動保存します。新しいパソコンやスマホでも、ここに同じ設定を入れれば続きから使えます。</p>
     <div style="background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:15px;font-size:12.5px">
-      状態：<b>${syncState==="ok"?"✅ 同期済み":syncState==="off"?"未設定":syncState==="pending"?"⏳ 保存待ち":syncState==="syncing"?"⏳ 同期中":syncState==="conflict"?"⚠ 要確認":"⚠ エラー"}</b>
+      状態：<b>${syncState==="ok"?"✅ 同期済み":syncState==="off"?"未設定":syncState==="ready"?"⚠ 未同期":syncState==="pending"?"⏳ 保存待ち":syncState==="syncing"?"⏳ 同期中":syncState==="conflict"?"⚠ 要確認":"⚠ エラー"}</b>
+      ${syncState==="ready"?`<div style="color:var(--danger);margin-top:3px">まだ一度もGitHubとやりとりできていません。<b>「接続をためす」</b>を押して確認してください。</div>`:""}
       ${syncMsg?`<div style="color:var(--ink2);margin-top:3px">${esc(syncMsg)}</div>`:""}
       ${SYNC.lastSyncAt?`<div style="color:var(--ink3);margin-top:3px">最終同期：${esc(fmtTime(SYNC.lastSyncAt))}</div>`:""}
     </div>
