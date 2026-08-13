@@ -526,9 +526,7 @@ function sampleDB(){
   const H4=mk({parentId:H3.id,level:"quarter",order:0,title:"20kmを一度に走れるようになる",
     deadline:"2026-10-31",status:"進行中"});
   mk({parentId:H4.id,level:"action",order:0,title:"週3回のランニングを継続する",status:"進行中",progress:35});
-  db.habits.daily=[{id:uid(),name:"6時に起きる"},{id:uid(),name:"10分の瞑想"},{id:uid(),name:"30分の運動"}];
-  db.habits.weekly=[{id:uid(),name:"週次レビュー（日曜）"},{id:uid(),name:"家計の記録"}];
-  db.habits.monthly=[{id:uid(),name:"月次レビュー"},{id:uid(),name:"目標の見直し"}];
+  db.habits.monthly=[{id:uid(),name:"今月の見直しをする"},{id:uid(),name:"中目標を今月の行動に落とし込む"},{id:uid(),name:"資産の記録"}];
   db.habits.yearly=[{id:uid(),name:"年間計画を作り直す"},{id:uid(),name:"1年の振り返りを書く"}];
   return db;
 }
@@ -1496,37 +1494,15 @@ function weekOfYear(d){
 }
 function renderHabits(){
   const now=new Date();
-  if(!habState.daily) habState.daily=ymKey(now);
-  if(!habState.weekly) habState.weekly=now.getFullYear();
   if(!habState.monthly) habState.monthly=now.getFullYear();
-  const [dy,dm]=habState.daily.split("-").map(Number);
-  const nDays=daysInMonth(dy,dm);
-  const curYM=ymKey(now), curDay=now.getDate(), curWeek=weekOfYear(now), curYear=now.getFullYear();
+  const curYear=now.getFullYear();
   const startY=Number(DB.settings.startYear)||curYear;
 
   let h=topNotices();
-  h+=`<h2 class="sec">習慣トラッカー　<span class="sec-note">続けると決めたことを、実行したら押す（記録は月・年ごとに残ります）</span></h2>`;
+  h+=`<h2 class="sec">習慣　<span class="sec-note">月に一度ひらいて、できたものに ○ を入れる</span></h2>`;
 
-  /* Daily */
-  h+=`<div class="hab-block"><div class="hab-title">【Daily】毎日の習慣</div>
-    <div class="periodnav"><button onclick="habShift('daily',-1)">◀</button>
-      <span class="pv">${dy}年${dm}月</span><button onclick="habShift('daily',1)">▶</button>
-      <button onclick="habState.daily=null;renderHabits()">今月</button></div><div class="hab-scroll">`;
-  h+=habTable(DB.habits.daily,"daily",habState.daily,nDays,i=>i+1,
-        (habState.daily===curYM?curDay-1:-1));
-  h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('daily')">＋ 習慣を追加</button></div>`;
-
-  /* Weekly */
-  h+=`<div class="hab-block"><div class="hab-title">【Weekly】毎週の習慣</div>
-    <div class="periodnav"><button onclick="habShift('weekly',-1)">◀</button>
-      <span class="pv">${habState.weekly}年（52週）</span><button onclick="habShift('weekly',1)">▶</button>
-      <button onclick="habState.weekly=null;renderHabits()">今年</button></div><div class="hab-scroll">`;
-  h+=habTable(DB.habits.weekly,"weekly",String(habState.weekly),52,i=>i+1,
-        (habState.weekly===curYear?curWeek-1:-1));
-  h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('weekly')">＋ 習慣を追加</button></div>`;
-
-  /* Monthly */
-  h+=`<div class="hab-block"><div class="hab-title">【Monthly】毎月の習慣</div>
+  /* Monthly：月が列 */
+  h+=`<div class="hab-block"><div class="hab-title">【毎月】月に一度やると決めたこと</div>
     <div class="periodnav"><button onclick="habShift('monthly',-1)">◀</button>
       <span class="pv">${habState.monthly}年</span><button onclick="habShift('monthly',1)">▶</button>
       <button onclick="habState.monthly=null;renderHabits()">今年</button></div><div class="hab-scroll">`;
@@ -1535,7 +1511,7 @@ function renderHabits(){
   h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('monthly')">＋ 習慣を追加</button></div>`;
 
   /* Yearly：年が列 */
-  h+=`<div class="hab-block"><div class="hab-title">【Yearly】毎年の習慣</div><div class="hab-scroll">`;
+  h+=`<div class="hab-block"><div class="hab-title">【毎年】年に一度やると決めたこと</div><div class="hab-scroll">`;
   h+=habTable(DB.habits.yearly,"yearly","all",10,i=>(startY+i)+"年",
         (curYear-startY>=0&&curYear-startY<10?curYear-startY:-1));
   h+=`</div><button class="btn sm" style="margin-top:12px" onclick="addHab('yearly')">＋ 習慣を追加</button></div>`;
