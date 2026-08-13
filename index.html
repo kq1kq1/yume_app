@@ -217,6 +217,17 @@ h2.sec.warn::before{background:var(--danger)}
 .bigstat .k{font-size:10px; color:var(--ink3); font-weight:700; letter-spacing:.05em}
 .bigstat .v{font-size:16px; font-weight:800; line-height:1.3}
 .bigstat.warn .v{color:var(--danger)}
+/* ---------- 優先度 A / B / C ---------- */
+.prio{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:19px; height:19px; padding:0 5px; border-radius:6px;
+  font-size:11px; font-weight:800; margin-right:6px; flex-shrink:0; letter-spacing:0;
+}
+.prio.A{background:#c62828; color:#fff}
+.prio.B{background:var(--line); color:var(--ink2)}
+.prio.C{background:transparent; color:var(--ink3); border:1px solid var(--line); font-weight:700}
+@media (prefers-color-scheme:dark){ .prio.A{background:#e05252; color:#fff} }
+.prio-big{min-width:24px; height:24px; font-size:12.5px; margin-right:8px}
 .stepnum{
   display:inline-flex; align-items:center; justify-content:center; min-width:22px; height:22px;
   border-radius:99px; background:var(--navy2); color:#fff; font-size:11.5px; font-weight:800;
@@ -242,7 +253,8 @@ h2.sec.warn::before{background:var(--danger)}
   transition:transform .15s ease, box-shadow .15s ease;
   display:flex; flex-direction:column; border-left:5px solid var(--navy2)}
 .child-card:hover{transform:translateY(-2px); box-shadow:0 8px 24px rgba(20,32,60,.16)}
-.cc-lv{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink3)}
+.cc-lv{font-size:10.5px;font-weight:800;letter-spacing:.08em;color:var(--ink3);
+  display:flex; align-items:center}
 .cc-title{font-size:16px; font-weight:700; line-height:1.45}
 .cc-detail{margin-top:7px; font-size:13px; color:var(--ink2); white-space:pre-wrap}
 .cc-why{margin-top:8px; font-size:12.5px; color:var(--ink2); white-space:pre-wrap;
@@ -489,12 +501,12 @@ function sampleDB(){
   db.settings.ultimateGoal="自分の力で世の中の課題を解決し、家族と自分の人生を豊かにする";
   const now=todayStr();
   const mk=o=>{ const n=Object.assign({id:uid(),parentId:null,level:"major",title:"",detail:"",why:"",
-    deadline:"",status:"未着手",progress:0,order:0,updatedAt:now,log:[]},o); db.nodes.push(n); return n; };
+    deadline:"",status:"未着手",prio:"B",progress:0,order:0,updatedAt:now,log:[]},o); db.nodes.push(n); return n; };
   const M=mk({parentId:"g5",level:"major",order:0,
     title:"自分のサービスで多くの人の課題を解決する",
     detail:"自分がつくった事業が、社会に必要とされ続けている状態",
     why:"人の役に立っている実感が、自分の人生の一番の充実になるから",
-    deadline:"2040-12-31",status:"進行中"});
+    deadline:"2040-12-31",status:"進行中",prio:"A"});
   const D=mk({parentId:M.id,level:"mid",order:0,
     title:"継続的に収益が出るサービスを1つ立ち上げる",
     detail:"利用者が定着し、収支が黒字で回っている",
@@ -516,7 +528,7 @@ function sampleDB(){
     title:"70代まで自分の足で歩き、やりたいことができる体でいる",
     detail:"病気で挑戦を諦めることがない状態",
     why:"体が動かなければ、他のすべての夢が実行できなくなるから",
-    deadline:"2055-12-31",status:"進行中"});
+    deadline:"2055-12-31",status:"進行中",prio:"A"});
   const H2=mk({parentId:H.id,level:"mid",order:0,title:"運動が生活の一部になっている",
     detail:"意識しなくても週3回は体を動かしている",
     why:"根性ではなく習慣にしないと続かないから",deadline:"2029-12-31",status:"進行中"});
@@ -553,6 +565,7 @@ function normalize(){
     n.deadline=n.deadline||""; n.status=STATUS.includes(n.status)?n.status:"未着手";
     n.progress=Number(n.progress)||0; n.order=Number(n.order)||0;
     n.updatedAt=n.updatedAt||now; n.log=Array.isArray(n.log)?n.log:[];
+    n.prio=["A","B","C"].includes(n.prio)?n.prio:"B";
     if(!LEVELS[n.level]) n.level="action";
   });
 }
@@ -884,6 +897,14 @@ function daysLeft(d){ if(!d) return null; const t=new Date(); t.setHours(0,0,0,0
 function daysSince(d){ if(!d) return null; const t=new Date(); t.setHours(0,0,0,0);
   const x=new Date(d+"T00:00:00"); if(isNaN(x)) return null; return Math.round((t-x)/86400000); }
 function statusIdx(s){ const i=STATUS.indexOf(s); return i<0?0:i; }
+const PRIO_RANK={A:0,B:1,C:2};
+function prioRank(n){ const r=PRIO_RANK[n&&n.prio]; return r===undefined?1:r; }
+function prioBadge(n,big){ const p=(n&&n.prio)||"B";
+  return `<span class="prio ${p}${big?" prio-big":""}" title="優先度 ${p}（A＝最優先）">${p}</span>`; }
+/* 優先度が高い順 → 期限が近い順 */
+function byPrioThenDate(a,b){
+  return prioRank(a)-prioRank(b) || (a.deadline||"9999-99-99").localeCompare(b.deadline||"9999-99-99");
+}
 
 /* =========================================================
    ヘッダー
@@ -893,7 +914,7 @@ const NAVS=[["home","🏠 ホーム"],["review","🔄 今月の見直し"],["tre
 function overdueList(){
   return DB.nodes.filter(n=>n.deadline&&n.status!=="達成"&&n.status!=="保留")
     .map(n=>({n,d:daysLeft(n.deadline)})).filter(x=>x.d!==null&&x.d<0)
-    .sort((a,b)=>a.d-b.d);
+    .sort((a,b)=>prioRank(a.n)-prioRank(b.n) || a.d-b.d);
 }
 function renderTop(){
   const s=DB.settings, u=el("ultimateText");
@@ -983,6 +1004,16 @@ function renderHome(){
     ${s.ultimateWhy?`<div class="uc-why">${esc(s.ultimateWhy)}</div>`:""}
     <button class="uc-edit" onclick="editUltimate()">究極の目標を編集</button>
   </div>`;
+
+  /* 最優先（A）の目標 — いつでも目に入るように */
+  const topA=DB.nodes.filter(x=>x.prio==="A"&&x.status!=="達成"&&x.status!=="保留").sort(byPrioThenDate);
+  if(topA.length){
+    h+=`<h2 class="sec">最優先（A）の目標　<span class="sec-note">${topA.length}件 — まずここに時間を使う</span></h2>
+      <div class="child-grid">`;
+    topA.slice(0,6).forEach(x=>{ h+=childCardHTML(x,{showPath:true}); });
+    h+=`</div>`;
+    if(topA.length>6) h+=`<div class="empty-note">ほか ${topA.length-6} 件のAがあります。数が多いときは、本当に最優先のものだけAに残しましょう。</div>`;
+  }
 
   const od=overdueList();
   if(od.length){
@@ -1080,7 +1111,7 @@ function childCardHTML(n,opt){
   opt=opt||{};
   const g=genreOf(n.id), kids=childrenOf(n.id), lv=LEVELS[n.level], p=rollupProgress(n.id);
   return `<button class="child-card" style="border-left-color:${g?g.color:"var(--navy2)"}" onclick="openNode('${n.id}')">
-    <div class="cc-lv">${esc(lv?lv.label:"")}</div>
+    <div class="cc-lv">${prioBadge(n)}${esc(lv?lv.label:"")}</div>
     <div class="cc-title">${opt.step?`<span class="stepnum ${n.status==="達成"?"done":""}">${n.status==="達成"?"✓":"STEP "+opt.step}</span>`:""}${esc(n.title||"（無題）")}</div>
     ${n.detail?`<div class="cc-detail">${esc(n.detail)}</div>`:""}
     ${n.why?`<div class="cc-why">${esc(n.why)}</div>`:""}
@@ -1106,7 +1137,7 @@ function renderNode(){
   h+=`<span class="cur">${esc(n.title||"（無題）")}</span></div>`;
 
   h+=`<div class="node-head" style="border-left-color:${g?g.color:"var(--navy2)"}">
-    <span class="lvtag">${esc(lv.label)}</span>
+    ${n.isGenre?"":prioBadge(n,true)}<span class="lvtag">${esc(lv.label)}</span>
     <h1>${esc(n.title||"（無題）")}</h1>
     ${n.detail?`<div class="detail">${esc(n.detail)}</div>`:""}
     ${n.why?`<div class="why"><b>なぜこれをやるのか</b>${esc(n.why)}</div>`:""}`;
@@ -1203,6 +1234,8 @@ function nodeFields(o){
     {k:"detail",label:"どうなっていれば達成か",hint:"理想の状態を具体的に",type:"textarea",value:v.detail||"",ph:"例）利用者が定着し、収支が黒字で回っている"},
     {k:"why",label:"なぜこれをやるのか",hint:"迷ったときに立ち返る理由",type:"textarea",value:v.why||"",ph:"例）まず1つ成功させないと、次の挑戦の土台ができないから"},
     {k:"deadline",label:"実現目標日",type:"date",value:v.deadline||""},
+    {k:"prio",label:"優先度",hint:"A＝最優先／B＝ふつう／C＝あとで",type:"select",
+     value:v.prio||"B",options:["A","B","C"]},
     {k:"status",label:"状態",type:"select",value:v.status||"未着手",options:STATUS}];
   if(o.hasKids) f.push({k:"progress",type:"hidden",value:v.progress||0});
   else f.push({k:"progress",label:"進み具合",
@@ -1217,7 +1250,7 @@ function addChild(parentId,level){
     onSave:v=>{
       if(!v.title.trim()){ toast("タイトルを入力してください"); return false; }
       DB.nodes.push({id:uid(),parentId,level,title:v.title.trim(),detail:v.detail.trim(),why:v.why.trim(),
-        deadline:v.deadline,status:v.status,progress:Number(v.progress)||0,
+        deadline:v.deadline,status:v.status,prio:v.prio||"B",progress:Number(v.progress)||0,
         order:childrenOf(parentId).length,updatedAt:todayStr(),log:[]});
       save();
       if(from==="review") go("review"); else go("node",parentId);
@@ -1232,7 +1265,7 @@ function editNode(id){
       if(!v.title.trim()){ toast("タイトルを入力してください"); return false; }
       const changed = n.status!==v.status || String(n.progress)!==String(v.progress) || n.deadline!==v.deadline;
       Object.assign(n,{title:v.title.trim(),detail:v.detail.trim(),why:v.why.trim(),
-        deadline:v.deadline,status:v.status,progress:Number(v.progress)||0});
+        deadline:v.deadline,status:v.status,prio:v.prio||"B",progress:Number(v.progress)||0});
       if(changed) touch(n); else touch(n);
       save(); go("node",id); toast("保存しました");
     }});
@@ -1320,8 +1353,7 @@ function renderReview(){
   else h+=`<div class="empty-note">長く放置している目標はありません。</div>`;
 
   /* ④ 中目標 → 今年・今月の行動へ落とし込む（毎月・毎年の見直しの中心） */
-  const mids=DB.nodes.filter(x=>x.level==="mid"&&x.status!=="達成")
-    .sort((a,b)=>(a.deadline||"9999-99-99").localeCompare(b.deadline||"9999-99-99"));
+  const mids=DB.nodes.filter(x=>x.level==="mid"&&x.status!=="達成").sort(byPrioThenDate);
   h+=`<h2 class="sec">④ 中目標を「今年・今月やること」に落とし込む　<span class="sec-note">${mids.length}件 — ここが見直しの中心です</span></h2>`;
   if(!mids.length){
     h+=`<div class="empty-note">中目標がまだありません。大目標の画面を開いて、そこへ到達するためのステップ（中目標）を書き出してください。</div>`;
@@ -1437,7 +1469,7 @@ function treeNodeHTML(id,color){
     <button class="tcaret ${kids.length?"":"leaf"} ${open?"open":""}" onclick="toggleTree('${id}')">▶</button>
     <span class="tdot" style="background:${color}"></span>
     <button class="ttitle" onclick="openNode('${id}')">
-      <span class="lv">${esc(LEVELS[n.level].label)}</span>${esc(n.title||"（無題）")}
+      ${n.isGenre?"":prioBadge(n)}<span class="lv">${esc(LEVELS[n.level].label)}</span>${esc(n.title||"（無題）")}
       ${sub?`<span class="dt">${esc(sub)}</span>`:""}</button>${meta}</div>`;
   if(open&&kids.length){ h+=`<div class="tkids">`; kids.forEach(k=>{ h+=treeNodeHTML(k.id,color); }); h+=`</div>`; }
   return h+`</div>`;
