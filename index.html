@@ -312,6 +312,34 @@ h2.sec.warn::before{background:var(--danger)}
 .reviewbox textarea{width:100%; min-height:96px; padding:10px 13px; border:1px solid var(--line);
   border-radius:10px; background:var(--bg); color:var(--ink); resize:vertical; line-height:1.7; outline:none}
 .reviewbox textarea:focus{border-color:var(--navy2); background:var(--panel)}
+.rb-head{font-size:14px; font-weight:800; margin-bottom:10px}
+.savedmark{font-size:12px; color:#0b7a53; font-weight:700}
+@media (prefers-color-scheme:dark){ .savedmark{color:#6ee7b7} }
+.howto{background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--navy2);
+  border-radius:12px; padding:13px 18px; margin-bottom:16px; font-size:13px; color:var(--ink2)}
+.howto b{color:var(--ink); font-size:13.5px; display:block; margin-bottom:5px}
+.rev-split{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:16px; margin-bottom:18px}
+@media (max-width:920px){ .rev-split{grid-template-columns:1fr} }
+.rev-split textarea{min-height:230px}
+.goaloverview{max-height:300px; overflow-y:auto; border:1px solid var(--line);
+  border-radius:10px; padding:12px 14px; background:var(--bg)}
+.ov{font-size:12.5px; line-height:1.7}
+.ov-ult{font-size:12px; color:var(--ink2); padding-bottom:9px; margin-bottom:9px; border-bottom:1px solid var(--line)}
+.ov-ult b{color:var(--ink); font-size:13.5px}
+.ov-g{margin-bottom:11px}
+.ov-gname{font-weight:800; font-size:13px; display:flex; align-items:center; gap:7px}
+.ov-dot{width:9px; height:9px; border-radius:3px; flex-shrink:0}
+.ov-gg{color:var(--accent); font-weight:700; margin:2px 0 4px 16px}
+.ov-m{margin-left:16px; display:flex; align-items:baseline; flex-wrap:wrap; gap:5px; margin-top:3px}
+.ov-s{margin-left:34px; display:flex; align-items:baseline; flex-wrap:wrap; gap:5px; color:var(--ink2)}
+.ov-i{display:inline-block; min-width:15px; font-size:10.5px; color:var(--ink3); font-weight:700}
+.ov-link{background:none; border:0; padding:0; color:inherit; font-size:inherit;
+  font-weight:600; text-align:left; cursor:pointer}
+.ov-link:hover{color:var(--navy2); text-decoration:underline}
+.ov-d{font-size:11px; color:var(--ink3); white-space:nowrap}
+.ov-done{font-size:10.5px; background:#d1fae5; color:#065f46; border-radius:99px; padding:0 7px; font-weight:700}
+@media (prefers-color-scheme:dark){ .ov-done{background:#14432f; color:#7ceec0} }
+.ov-empty{color:var(--ink3)}
 
 /* ---------- ツリー ---------- */
 .tree{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
@@ -949,6 +977,7 @@ function lifeInfo(){
    画面遷移
    ========================================================= */
 function go(view,id){
+  flushReviewDraft();   /* 書きかけのふりかえりを先に保存してから画面を切り替える */
   currentView=view; if(id!==undefined) currentNodeId=id;
   document.querySelectorAll(".view").forEach(v=>v.classList.remove("on"));
   el("v-"+view).classList.add("on");
@@ -1330,48 +1359,97 @@ function reparentModal(id){
    ========================================================= */
 let reviewMonth=null;
 function ymKey(d){ return `${d.getFullYear()}-${p2(d.getMonth()+1)}`; }
+function prevMonthKey(){ const d=new Date(); d.setDate(1); d.setMonth(d.getMonth()-1); return ymKey(d); }
+
+/* 見直しを書きながら参照する「目標の全体像」 */
+function goalOverviewHTML(){
+  let h=`<div class="ov"><div class="ov-ult">究極の目標<br><b>${esc(DB.settings.ultimateGoal||"（未設定）")}</b></div>`;
+  let any=false;
+  GENRES.forEach(g=>{
+    const gg=(DB.genreGoals||{})[g.id]||{}, majors=childrenOf(g.id);
+    if(!gg.title&&!majors.length) return;
+    any=true;
+    h+=`<div class="ov-g"><div class="ov-gname"><span class="ov-dot" style="background:${g.color}"></span>${esc(g.title)}</div>`;
+    if(gg.title) h+=`<div class="ov-gg">★ ${esc(gg.title)}${gg.deadline?`　<span class="ov-d">${esc(dateAgeText(gg.deadline))}</span>`:""}</div>`;
+    majors.forEach(m=>{
+      h+=`<div class="ov-m">${prioBadge(m)}<button class="ov-link" onclick="openNode('${m.id}')">${esc(m.title||"（無題）")}</button>
+        ${m.deadline?`<span class="ov-d">${esc(dateAgeText(m.deadline))}</span>`:""}
+        ${m.status==="達成"?`<span class="ov-done">達成</span>`:""}</div>`;
+      childrenOf(m.id).forEach((s,i)=>{
+        h+=`<div class="ov-s"><span class="ov-i">${s.status==="達成"?"✓":i+1}</span>
+          <button class="ov-link" onclick="openNode('${s.id}')">${esc(s.title||"（無題）")}</button>
+          ${s.deadline?`<span class="ov-d">${esc(dateAgeText(s.deadline))}</span>`:""}</div>`;
+      });
+    });
+    h+=`</div>`;
+  });
+  if(!any) h+=`<div class="ov-empty">まだ目標が登録されていません。ホームの6分野から書き始めてください。</div>`;
+  return h+`</div>`;
+}
+
 function renderReview(){
-  if(!reviewMonth) reviewMonth=ymKey(new Date());
+  if(!reviewMonth) reviewMonth=prevMonthKey();
   const [ry,rm]=reviewMonth.split("-").map(Number);
-  const monthStart=new Date(ry,rm-1,1), monthEnd=new Date(ry,rm,0);
-  const inRange=(ds,a,b)=>{ const x=new Date(ds+"T00:00:00"); return x>=a&&x<=b; };
+  const nowYM=ymKey(new Date());
   let h=topNotices();
 
   h+=`<div class="periodnav">
     <button onclick="shiftReview(-1)">◀ 前の月</button>
     <span class="pv">${ry}年${rm}月</span>
     <button onclick="shiftReview(1)">次の月 ▶</button>
-    <button onclick="reviewMonth=null;go('review')">今月に戻る</button>
+    <button onclick="reviewMonth=null;go('review')">先月に戻る</button>
+    ${reviewMonth===nowYM?`<span class="sec-note">（今月です。ふつうは月初に「先月」をふりかえります）</span>`:""}
   </div>`;
 
-  h+=`<div class="reviewbox">
-    <h2 class="sec" style="margin-top:0">${ry}年${rm}月のふりかえり　<span class="sec-note">この月に何が進み、何を変えるか</span></h2>
-    <textarea id="revText" placeholder="例）仕事は前進したが健康が止まった。来月はランを週2に落として確実に続ける。">${esc((DB.reviews[reviewMonth]||{}).text||"")}</textarea>
-    <div style="margin-top:10px"><button class="btn primary" onclick="saveReview()">この月のふりかえりを保存</button></div>
+  h+=`<div class="howto">
+    <b>書き方</b>
+    <div>① 右の「先月のふりかえり」に、進んだこと・止まったこと・気づきを書く（自動で保存されます）<br>
+    ② 下の一覧で、期限が過ぎたもの・今年と来年の目標を見て、状態や期限を直す<br>
+    ③ 最後に「中目標を今年・今月やることに落とし込む」で、次の一手を決める</div>
+  </div>`;
+
+  h+=`<div class="rev-split">
+    <div class="reviewbox" style="margin-bottom:0">
+      <div class="rb-head">目標の全体像　<span class="sec-note">これを見ながら書けます。押すとその目標を開きます</span></div>
+      <div class="goaloverview">${goalOverviewHTML()}</div>
+    </div>
+    <div class="reviewbox" style="margin-bottom:0">
+      <div class="rb-head">${ry}年${rm}月のふりかえり　<span class="sec-note">この月に何が進み、何を変えるか</span></div>
+      <textarea id="revText" data-key="${esc(reviewMonth)}" oninput="revAutoSave()" onblur="revAutoSave(true)"
+        placeholder="例）仕事は前進したが健康が止まった。来月はランを週2に落として確実に続ける。">${esc((DB.reviews[reviewMonth]||{}).text||"")}</textarea>
+      <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
+        <button class="btn primary" onclick="saveReview()">保存</button>
+        <span id="revSaved" class="savedmark">${(DB.reviews[reviewMonth]||{}).text?"保存済み":""}</span>
+      </div>
+    </div>
   </div>`;
 
   const od=overdueList();
-  h+=`<h2 class="sec ${od.length?"warn":""}">① 期限を過ぎたもの　<span class="sec-note">${od.length}件</span></h2>`;
+  h+=`<h2 class="sec ${od.length?"warn":""}">① 期限を過ぎたもの　<span class="sec-note">${od.length}件 — 進行中のものは、期限を過ぎても消えずに残ります</span></h2>`;
   if(od.length){ od.forEach(({n,d})=>{ h+=revCardHTML(n,d,true); }); }
   else h+=`<div class="empty-note">期限を過ぎた目標はありません。</div>`;
 
-  const nextEnd=new Date(ry,rm+1,0);
-  const near=DB.nodes.filter(n=>n.deadline&&n.status!=="達成"&&inRange(n.deadline,monthStart,nextEnd))
-    .sort((a,b)=>a.deadline.localeCompare(b.deadline));
-  h+=`<h2 class="sec">② この月・来月が期限のもの　<span class="sec-note">${near.length}件</span></h2>`;
-  if(near.length){ near.forEach(n=>{ h+=revCardHTML(n,daysLeft(n.deadline),false); }); }
-  else h+=`<div class="empty-note">この期間に期限を決めた目標はありません。</div>`;
+  /* その年・翌年の目標を「全部」出す（達成済みは下に回す） */
+  const yearList=Y=>DB.nodes.filter(n=>n.deadline&&Number(n.deadline.slice(0,4))===Y)
+    .sort((a,b)=>((a.status==="達成")?1:0)-((b.status==="達成")?1:0)||byPrioThenDate(a,b));
+  [[ry,"②"],[ry+1,"③"]].forEach(([Y,mark])=>{
+    const list=yearList(Y);
+    const done=list.filter(n=>n.status==="達成").length;
+    h+=`<h2 class="sec">${mark} ${Y}年が期限の目標　<span class="sec-note">${list.length}件${done?`（うち達成 ${done}件）`:""} — その年のものは全部出しています</span></h2>`;
+    if(list.length){ list.forEach(n=>{ h+=revCardHTML(n,daysLeft(n.deadline),false); }); }
+    else h+=`<div class="empty-note">${Y}年に期限を決めた目標はありません。</div>`;
+  });
 
   const stale=DB.nodes.filter(n=>n.status!=="達成"&&n.status!=="保留")
     .map(n=>({n,s:daysSince(n.updatedAt)})).filter(x=>x.s!==null&&x.s>=90)
     .sort((a,b)=>b.s-a.s).slice(0,12);
-  h+=`<h2 class="sec">③ 90日以上さわっていないもの　<span class="sec-note">${stale.length}件 — 忘れていないか確認</span></h2>`;
+  h+=`<h2 class="sec">④ 90日以上さわっていないもの　<span class="sec-note">${stale.length}件 — 忘れていないか確認</span></h2>`;
   if(stale.length){ stale.forEach(({n,s})=>{ h+=revCardHTML(n,daysLeft(n.deadline),false,`${s}日 更新なし`); }); }
   else h+=`<div class="empty-note">長く放置している目標はありません。</div>`;
 
-  /* ④ 中目標 → 今年・今月の行動へ落とし込む（毎月・毎年の見直しの中心） */
+  /* ⑤ 中目標 → 今年・今月の行動へ落とし込む（毎月・毎年の見直しの中心） */
   const mids=DB.nodes.filter(x=>x.level==="mid"&&x.status!=="達成").sort(byPrioThenDate);
-  h+=`<h2 class="sec">④ 中目標を「今年・今月やること」に落とし込む　<span class="sec-note">${mids.length}件 — ここが見直しの中心です</span></h2>`;
+  h+=`<h2 class="sec">⑤ 中目標を「今年・今月やること」に落とし込む　<span class="sec-note">${mids.length}件 — ここが見直しの中心です</span></h2>`;
   if(!mids.length){
     h+=`<div class="empty-note">中目標がまだありません。大目標の画面を開いて、そこへ到達するためのステップ（中目標）を書き出してください。</div>`;
   } else {
@@ -1399,11 +1477,56 @@ function renderReview(){
 
   h+=`<h2 class="sec">年に一度：計画を作り直す</h2>
   <div class="reviewbox">
-    <div style="font-size:13.5px;color:var(--ink2);margin-bottom:10px">${ry}年のふりかえり（できたこと／できなかったこと／来年へ）</div>
-    <textarea id="revYear" placeholder="例）大目標は変えない。中目標の期限が甘かったので1年後ろへ。来年は健康を最優先にする。">${esc((DB.reviews["Y"+ry]||{}).text||"")}</textarea>
-    <div style="margin-top:10px"><button class="btn primary" onclick="saveYearReview(${ry})">${ry}年のふりかえりを保存</button></div>
+    <div class="rb-head">${ry}年のふりかえり　<span class="sec-note">できたこと／できなかったこと／来年へ</span></div>
+    <textarea id="revYear" data-key="Y${ry}" oninput="revAutoSave()" onblur="revAutoSave(true)"
+      placeholder="例）大目標は変えない。中目標の期限が甘かったので1年後ろへ。来年は健康を最優先にする。">${esc((DB.reviews["Y"+ry]||{}).text||"")}</textarea>
+    <div style="margin-top:10px;display:flex;align-items:center;gap:12px">
+      <button class="btn primary" onclick="saveYearReview(${ry})">保存</button>
+      <span id="revYearSaved" class="savedmark">${(DB.reviews["Y"+ry]||{}).text?"保存済み":""}</span>
+    </div>
   </div>`;
+
+  /* これまでのふりかえり（積み上がっていることが見えるように） */
+  const past=Object.keys(DB.reviews||{})
+    .filter(k=>((DB.reviews[k]||{}).text||"").trim() && k!==reviewMonth && k!=="Y"+ry)
+    .sort().reverse();
+  h+=`<h2 class="sec">これまでのふりかえり　<span class="sec-note">${past.length}件 — 書いた分はすべて残ります</span></h2>`;
+  if(past.length){
+    h+=`<div class="reviewbox">`;
+    past.forEach(k=>{
+      const label=k.startsWith("Y")?`${k.slice(1)}年（年次）`:`${k.split("-")[0]}年${Number(k.split("-")[1])}月`;
+      h+=`<div class="logitem"><span class="ld">${esc(label)}</span><span class="lt">${esc(DB.reviews[k].text)}</span>
+        <button class="lx" title="この月を開く" onclick="${k.startsWith("Y")?"":`reviewMonth='${k}';go('review')`}">${k.startsWith("Y")?"":"▸"}</button></div>`;
+    });
+    h+=`</div>`;
+  } else {
+    h+=`<div class="empty-note">まだありません。毎月ここに書いていくと、下に積み上がっていきます。</div>`;
+  }
   el("v-review").innerHTML=h;
+}
+/* 下書きの自動保存（ボタンを押し忘れても消えないように） */
+let revSaveTimer=null;
+function revAutoSave(now){
+  clearTimeout(revSaveTimer);
+  const run=()=>{ if(flushReviewDraft()) flashSaved(); };
+  if(now) run(); else revSaveTimer=setTimeout(run,600);
+}
+function flashSaved(){
+  ["revSaved","revYearSaved"].forEach(id=>{ const e=el(id); if(e) e.textContent="保存済み"; });
+}
+/* 画面を離れる前に、書きかけを確実に保存する。保存したら true。
+   どの月の下書きかは textarea 自身が data-key で持っているので、
+   月を切り替えた直後でも、書いた内容が別の月に紛れ込むことはない。 */
+function flushReviewDraft(){
+  let changed=false;
+  [el("revText"),el("revYear")].forEach(t=>{
+    if(!t) return;
+    const key=t.dataset.key; if(!key) return;
+    const cur=(DB.reviews[key]||{}).text||"";
+    if(t.value!==cur){ DB.reviews[key]={text:t.value,savedAt:todayStr()}; changed=true; }
+  });
+  if(changed) save();
+  return changed;
 }
 function revCardHTML(n,d,isOver,extra){
   const g=genreOf(n.id);
@@ -1431,10 +1554,12 @@ function shiftReview(k){
 }
 function saveReview(){
   const t=el("revText").value;
-  DB.reviews[reviewMonth]={text:t,savedAt:todayStr()}; save(); toast("ふりかえりを保存しました");
+  DB.reviews[reviewMonth]={text:t,savedAt:todayStr()}; save(); flashSaved();
+  toast("ふりかえりを保存しました");
 }
 function saveYearReview(y){
-  DB.reviews["Y"+y]={text:el("revYear").value,savedAt:todayStr()}; save(); toast(y+"年のふりかえりを保存しました");
+  DB.reviews["Y"+y]={text:el("revYear").value,savedAt:todayStr()}; save(); flashSaved();
+  toast(y+"年のふりかえりを保存しました");
 }
 function quickStatus(id,st){
   const n=nodeById(id); if(!n||n.isGenre) return;
@@ -1821,8 +1946,12 @@ renderSyncChip();
 if(syncReady()) syncPull(true);
 /* 画面を離れるときに、保存待ちがあれば追い出す */
 document.addEventListener("visibilitychange",()=>{
-  if(document.visibilityState==="hidden"&&syncState==="pending"){ clearTimeout(syncTimer); syncPush(false); }
+  if(document.visibilityState==="hidden"){
+    flushReviewDraft();   /* 書きかけのふりかえりを取りこぼさない */
+    if(syncState==="pending"){ clearTimeout(syncTimer); syncPush(false); }
+  }
 });
+window.addEventListener("beforeunload",()=>{ flushReviewDraft(); });
 window.addEventListener("online",()=>{ if(syncReady()&&(syncState==="error"||syncState==="pending")) syncPush(false); });
 </script>
 </body>
