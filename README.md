@@ -73,7 +73,9 @@
    - Repository access: **Only select repositories** → 1で作ったリポジトリだけ
    - Permissions → Repository permissions → **Contents: Read and write**
 3. アプリの「設定・保存 → 同期」に、GitHubユーザー名・リポジトリ名・`data.json`・トークンを入力
+   - リポジトリ名の欄には `https://github.com/ユーザー名/リポジトリ名` のようなURLを貼っても、自動で名前に直されます
 4. 「設定を保存」→「接続をためす」→「今すぐ保存」
+   - 「接続をためす」は読み込みだけでなく、**書き込みの権限があるか**も確かめます（テスト用のファイルを一瞬作ってすぐ消すため、GitHubの履歴に「書き込みテスト」のコミットが2つ残ります）
 
 以後、書くたびに自動でGitHubへ保存されます。
 
